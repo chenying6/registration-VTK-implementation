@@ -146,38 +146,7 @@ void registrationWidget::setTransformation_right(const int flag, const float x, 
 
 void registrationWidget::setTransformation_left(const int flag, const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
-	vtkTransform *transformation = vtkTransform::New();
-	vtkTransform *conetrans = vtkTransform::New();
-	vtkMatrix4x4 *coneMatrix = vtkMatrix4x4::New();
-	vtkMatrix4x4 *transMatrix = vtkMatrix4x4::New();
-	transformation->Identity();
-	transformation->PostMultiply();
-	//左右手坐标系之间的变换
-	transformation->RotateWXYZ(-ry, 0, 1, 0);
-	transformation->RotateWXYZ(-rx, 1, 0, 0);
-	transformation->RotateWXYZ(rz, 0, 0, 1);
-	transformation->Translate(x, y, -z);
-	transMatrix = transformation->GetMatrix();
-	switch (flag) {
-	case 1:
-		coneMatrix = transMatrix;
-		conetrans->SetMatrix(coneMatrix);
-		m_coneActor->SetUserTransform(conetrans);
-		m_Toumomatrix = m_ToumoOriginActor->GetMatrix();
-		transMatrix->Multiply4x4(transMatrix, m_CTcenter2origin, transMatrix);
-		transMatrix->Multiply4x4(transMatrix, m_Toumomatrix, transMatrix);
-		transformation->SetMatrix(transMatrix);
-		m_ToumoOriginActor->SetUserTransform(transformation);
-		break;
-	case 2:
-		transformation->SetMatrix(transMatrix);
-		m_MarkerActor->SetUserTransform(transformation);
-		break;
-	}
-	transformation = NULL;
-	coneMatrix = NULL;
-	conetrans = NULL;
-	transMatrix = NULL;
+	setTransformation_right(flag, x, y, -z, -rx, -ry, rz);
 }
 
 void registrationWidget::setCurrentTransformation()
