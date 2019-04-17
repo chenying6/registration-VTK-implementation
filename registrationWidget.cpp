@@ -13,11 +13,17 @@
 #include <vtkColor.h>
 #include <vtkOBJExporter.h>
 #include <vtkDecimatePro.h>
+#include <vtksys/SystemTools.hxx>
+#include <vtkOBJReader.h>
+#include <vtkSTLReader.h>
+#include <vtkDICOMImageReader.h>
+#include <vtkImageShrink3D.h>
+#include <vtkMarchingCubes.h>
 #include <math.h>
 #include <fstream>
 #define LINE_LEN 1.
 #define PI 3.14159265
-std::string s_fileName = "E:\\Remebot\\dcm";
+std::string s_dicomName = "E:\\Remebot\\dcm";
 std::string s_modelName = "C:\\Users\\29477\\Desktop\\Decimate.obj";
 
 registrationWidget::registrationWidget(QWidget *parent)
@@ -28,13 +34,7 @@ registrationWidget::registrationWidget(QWidget *parent)
 	connect(ui->present, SIGNAL(clicked()), this, SLOT(setCurrentTransformation()));
 	connect(ui->transform, SIGNAL(clicked()), this, SLOT(mapCT2Toumo()));
 	connect(ui->ct2axis, SIGNAL(clicked()), this, SLOT(mapCT2Marker()));
-	m_reader->SetFileName(s_modelName.data());
-	m_reader->Update();
-	m_CTdata = m_reader->GetOutput();
-	m_Toumodata = m_reader->GetOutput();
-	//this->readCase();
-	m_CTMapper->SetInputData(m_CTdata);
-	m_ToumoMapper->SetInputData(m_Toumodata);
+	this->readCase(s_modelName);
 	m_CTActor->SetMapper(m_CTMapper);
 	m_CTActor->GetProperty()->SetColor(1, 1, 0.9412);
 	m_CTcenter = m_CTActor->GetCenter();
@@ -52,8 +52,11 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_worldActor->SetShaftType(0);
 	m_worldActor->SetAxisLabels(0);
 	m_worldActor->SetCylinderRadius(0.02);
+
+	vtkRenderer *renderer = vtkRenderer::New();
+	vtkRenderer *exportrenderer = vtkRenderer::New();
 	m_renderWindow->SetSize(800, 800);
-	m_renderWindow->AddRenderer(m_renderer);
+	m_renderWindow->AddRenderer(renderer);
 	m_renderWindowInteractor->SetRenderWindow(m_renderWindow);
 	m_conedata->SetAngle(30);
 	m_conedata->SetHeight(.2);
@@ -61,25 +64,22 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_conedata->SetResolution(10);
 	m_coneMapper->SetInputConnection(m_conedata->GetOutputPort());
 	m_coneActor->SetMapper(m_coneMapper);
-	m_exportrenderer->AddActor(m_CTActor);
-	m_renderer->AddActor(m_coneActor);
-	m_renderer->AddActor(m_worldActor);
-	m_renderer->AddActor(m_CTActor);
-	m_renderer->AddActor(m_ToumoOriginActor);
-	m_renderer->AddActor(m_MarkerActor);
-	m_renderer->SetBackground(.3, .3, .5);
-	m_exportWindow->AddRenderer(m_exportrenderer);
+	exportrenderer->AddActor(m_CTActor);
+	renderer->AddActor(m_coneActor);
+	renderer->AddActor(m_worldActor);
+	renderer->AddActor(m_CTActor);
+	renderer->AddActor(m_ToumoOriginActor);
+	renderer->AddActor(m_MarkerActor);
+	renderer->SetBackground(.3, .3, .5);
+	m_exportWindow->AddRenderer(exportrenderer);
 	m_renderWindowInteractor->Initialize();
 	//writeOBJCase();
 }
 
 registrationWidget::~registrationWidget()
 {
-	m_reader->Delete();
-	m_CTdata->Delete();
 	m_CTMapper->Delete();
 	m_CTActor->Delete();
-	m_Toumodata->Delete();
 	m_ToumoMapper->Delete();
 	m_ToumoOriginActor->Delete();
 	m_MarkerActor->Delete();
@@ -210,7 +210,8 @@ void registrationWidget::mapCT2Marker()
 		CTtrans->Multiply4x4(CTtrans, m_CTcenter2origin, CTtrans);
 		vtkTransform *trans = vtkTransform::New();
 		trans->SetMatrix(CTtrans);
-		//trans->Scale(0.001, 0.001, 0.001);
+		if(polyOrImage==1)
+			trans->Scale(0.001, 0.001, 0.001);
 		m_CTActor->SetUserTransform(trans);
 		m_renderWindow->Render();
 		m_renderWindowInteractor->Start();
@@ -218,43 +219,72 @@ void registrationWidget::mapCT2Marker()
 	firstClick2Marker = 1;
 }
 
-//void registrationWidget::readCase()
-//{
-//	this->m_reader = vtkDICOMImageReader::New();
-//	this->m_reader->SetDataByteOrderToLittleEndian();
-//	this->m_reader->SetDirectoryName(s_fileName.data());
-//	this->m_reader->ReleaseDataFlagOn();
-//	this->m_reader->SetDataScalarTypeToUnsignedShort();
-//	this->m_reader->Update();
-//	this->m_reader->GlobalWarningDisplayOff();
-//	vtkImageData *imageData = m_reader->GetOutput();
-//	this->m_shrink = vtkImageShrink3D::New();
-//	this->m_shrink->SetInputData((vtkDataObject*)imageData);
-//	this->m_shrink->SetShrinkFactors(1, 1, 1);
-//	this->m_shrink->AveragingOn();
-//	this->m_shrink->Update();
-//	this->m_CTdata = vtkMarchingCubes::New();
-//	this->m_CTdata->SetInputData((vtkDataSet*)this->m_shrink->GetOutput());
-//	this->m_CTdata->ComputeNormalsOn();
-//	this->m_CTdata->SetValue(0, -150);
-//	this->m_CTdata->Update();
-//	this->m_Toumodata = vtkMarchingCubes::New();
-//	this->m_Toumodata->SetInputData((vtkDataSet*)this->m_shrink->GetOutput());
-//	this->m_Toumodata->ComputeNormalsOn();
-//	this->m_Toumodata->SetValue(0, -150);
-//	this->m_Toumodata->Update();
-//	vtkSmartPointer<vtkTransform> rescaleCT = vtkSmartPointer<vtkTransform>::New();
-//	rescaleCT->Scale(0.001, 0.001, 0.001);
-//	m_CTActor->SetUserTransform(rescaleCT);
-//	vtkSmartPointer<vtkTransform> rescaleToumo = vtkSmartPointer<vtkTransform>::New();
-//	rescaleToumo->Scale(0.001, 0.001, 0.001);
-//	m_ToumoActor->SetUserTransform(rescaleToumo);
-//	decimate->SetInputData(m_CTdata);
-//	decimate->SetTargetReduction(0.8);
-//	decimate->Update();
-//	m_CTMapper->SetInputConnection(decimate->GetOutputPort());
-//	m_ToumoMapper->SetInputConnection(decimate->GetOutputPort());
-//}
+void registrationWidget::readCase(std::string fileName)
+{
+	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(fileName);
+	cout << "the extension of the filename: ";
+	cout << extension << endl;
+	vtkAlgorithm *reader = vtkAlgorithm::New();
+	vtkAbstractPolyDataReader *polyreader;
+	vtkDICOMImageReader *dicomReader = vtkDICOMImageReader::New();
+	vtkPolyData *CTdata = vtkPolyData::New();
+	vtkPolyData *Toumodata = vtkPolyData::New();
+	if (extension == ".obj")
+	{
+		polyreader = vtkOBJReader::New();
+		polyreader->SetFileName(fileName.data());
+		polyreader->Update();
+		CTdata = polyreader->GetOutput();
+		Toumodata = polyreader->GetOutput();
+		m_CTMapper->SetInputData(CTdata);
+		m_ToumoMapper->SetInputData(Toumodata);
+	}
+	else if (extension == ".stl")
+	{
+		polyreader = vtkSTLReader::New();
+		polyreader->SetFileName(fileName.data());
+		polyreader->Update();
+		CTdata = polyreader->GetOutput();
+		Toumodata = polyreader->GetOutput();
+		m_CTMapper->SetInputData(CTdata);
+		m_ToumoMapper->SetInputData(Toumodata);
+	}
+	else
+	{
+		cout << "dicom" << endl;
+		dicomReader->SetDataByteOrderToLittleEndian();
+		dicomReader->SetDirectoryName(fileName.data());
+		dicomReader->ReleaseDataFlagOn();
+		dicomReader->SetDataScalarTypeToUnsignedShort();
+		dicomReader->Update();
+		dicomReader->GlobalWarningDisplayOff();
+		vtkImageShrink3D * shrink= vtkImageShrink3D::New();
+		vtkMarchingCubes * CTdata= vtkMarchingCubes::New();
+		vtkDecimatePro *decimate = vtkDecimatePro::New();
+		vtkImageData *imageData = dicomReader->GetOutput();
+		shrink->SetInputData((vtkDataObject*)imageData);
+		shrink->SetShrinkFactors(1, 1, 1);
+		shrink->AveragingOn();
+		shrink->Update();
+		CTdata->SetInputData((vtkDataSet*)shrink->GetOutput());
+		CTdata->ComputeNormalsOn();
+		CTdata->SetValue(0, -150);
+		CTdata->Update();
+		decimate->SetInputData(CTdata->GetOutputDataObject(0));
+		decimate->SetTargetReduction(0.8);
+		decimate->Update();
+		vtkSmartPointer<vtkTransform> rescaleCT = vtkSmartPointer<vtkTransform>::New();
+		rescaleCT->Scale(0.001, 0.001, 0.001);
+		m_CTActor->SetUserTransform(rescaleCT);
+		vtkSmartPointer<vtkTransform> rescaleToumo = vtkSmartPointer<vtkTransform>::New();
+		rescaleToumo->Scale(0.001, 0.001, 0.001);
+		m_ToumoOriginActor->SetUserTransform(rescaleToumo);
+		m_CTMapper->SetInputConnection(decimate->GetOutputPort());
+		m_ToumoMapper->SetInputConnection(decimate->GetOutputPort());
+		polyOrImage = 1;
+	}
+	
+}
 
 void registrationWidget::writeOBJCase()
 {

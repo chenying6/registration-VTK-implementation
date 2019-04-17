@@ -20,12 +20,8 @@
 #include <vtkRenderWindow.h>
 #include <vtkRenderer.h>
 #include <vtkRenderWindowInteractor.h>
-#include <vtkOBJReader.h>
-#include <vtkSTLReader.h>
+#include <vtkPolyDataAlgorithm.h>
 #include <vtkTransform.h>
-#include <vtkDICOMImageReader.h>
-#include <vtkImageShrink3D.h>
-#include <vtkMarchingCubes.h>
 #include <vtkMatrix4x4.h>
 using namespace std;
 namespace Ui {
@@ -43,7 +39,7 @@ public slots:
 private:
 	void setTransformation_right(const int flag, const float x, const float y, const float z, const float rx, const float ry, const float rz);
 	void setTransformation_left(const int flag, const float x, const float y, const float z, const float rx, const float ry, const float rz);
-	//void readCase();
+	void readCase(std::string fileName);
 	void writeOBJCase();
 	void getXYZRotationAngles(vtkMatrix4x4 *m);
 	void outputMatrix(vtkMatrix4x4 *m);
@@ -51,17 +47,7 @@ private:
 private:
 	Ui_Form *ui;
 	vtkMatrix4x4 *worldMatrix = vtkMatrix4x4::New();
-	vtkMatrix4x4 *inverseWorldMatrix = vtkMatrix4x4::New();
-	vtkOBJReader *m_reader = vtkOBJReader::New();
-	//vtkSTLReader *m_reader = vtkSTLReader::New();
-	vtkPolyData *m_CTdata = vtkPolyData::New();
-	vtkPolyData *m_Toumodata = vtkPolyData::New();
-	/*vtkDICOMImageReader * m_DICOMreader;
-	vtkImageShrink3D * m_shrink;
-	vtkMarchingCubes * m_CTdata;
-	vtkMarchingCubes * m_Toumodata;
-	vtkDecimatePro *decimate = vtkDecimatePro::New();
-	*/
+	vtkMatrix4x4 *inverseWorldMatrix = vtkMatrix4x4::New();	
 	vtkTransform *m_CTorigin2center = vtkTransform::New();
 	vtkMatrix4x4 *m_CTcenter2origin = vtkMatrix4x4::New();
 	double *m_CTcenter;
@@ -81,6 +67,7 @@ private:
 	vtkRenderWindow *m_exportWindow = vtkRenderWindow::New();
 	vtkRenderWindowInteractor *m_renderWindowInteractor = vtkRenderWindowInteractor::New();
 	int firstClick2Marker=0;
+	int polyOrImage = 0;
 	double outMatrix[20][4];
 	int index = 0;
 };
