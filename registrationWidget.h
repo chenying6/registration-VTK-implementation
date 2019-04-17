@@ -1,28 +1,22 @@
 #ifndef MAININTERFACE_H
 #define MAININTERFACE_H
 /*
-*Copyright(C), 2019, Remebot
 *Author: Chen Ying
-*Version:1.1
-*Date: 2019-4-3
+*Version:1.3
+*Date: 2019-4-17
 */
 
 #include "ui_transparency.h"
-#include "vtkCubeSource.h"
-#include "vtkPolyDataMapper.h"
-#include "vtkActor.h"
-#include "vtkSmartPointer.h"
-#include "vtkConeSource.h"
 #include <qwidget.h>
 #include <QVTKWidget.h>
-#include "ui_transparency.h"
+#include "vtkPolyDataMapper.h"
+#include "vtkActor.h"
+#include "vtkConeSource.h"
 #include "vtkAxesActor.h"
-#include <vtkRenderWindow.h>
-#include <vtkRenderer.h>
-#include <vtkRenderWindowInteractor.h>
-#include <vtkPolyDataAlgorithm.h>
-#include <vtkTransform.h>
-#include <vtkMatrix4x4.h>
+#include "vtkRenderWindow.h"
+#include "vtkRenderWindowInteractor.h"
+#include "vtkTransform.h"
+#include "vtkMatrix4x4.h"
 using namespace std;
 namespace Ui {
 	class marchingCubeAPP : public Ui_Form {};
@@ -46,11 +40,9 @@ private:
 
 private:
 	Ui_Form *ui;
-	vtkMatrix4x4 *worldMatrix = vtkMatrix4x4::New();
-	vtkMatrix4x4 *inverseWorldMatrix = vtkMatrix4x4::New();	
+	double *m_CTcenter;
 	vtkTransform *m_CTorigin2center = vtkTransform::New();
 	vtkMatrix4x4 *m_CTcenter2origin = vtkMatrix4x4::New();
-	double *m_CTcenter;
 	vtkPolyDataMapper *m_CTMapper = vtkPolyDataMapper::New();
 	vtkActor *m_CTActor = vtkActor::New();
 	vtkPolyDataMapper *m_ToumoMapper = vtkPolyDataMapper::New();
@@ -61,8 +53,6 @@ private:
 	vtkConeSource *m_conedata = vtkConeSource::New();
 	vtkPolyDataMapper *m_coneMapper = vtkPolyDataMapper::New();
 	vtkActor *m_coneActor = vtkActor::New();
-	vtkRenderer *m_renderer = vtkRenderer::New();
-	vtkRenderer *m_exportrenderer = vtkRenderer::New();
 	vtkRenderWindow *m_renderWindow = vtkRenderWindow::New();
 	vtkRenderWindow *m_exportWindow = vtkRenderWindow::New();
 	vtkRenderWindowInteractor *m_renderWindowInteractor = vtkRenderWindowInteractor::New();

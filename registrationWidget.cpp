@@ -1,11 +1,9 @@
 /*
-*Copyright(C), 2019, Remebot
 *Author: Chen Ying
-*Version:1.1
-*Date: 2019-4-3
+*Version:1.3
+*Date: 2019-4-17
 *History change description:
-将原先center与origin重合的特殊模型改为通用模型，即直接由VTK生成的obj格式文件
-添加由旋转矩阵得各轴向旋转角度的函数
+change to a universal model whose origin and center are not in the same place;
 */
 #include "registrationWidget.h"
 #include "ui_transparency.h"
@@ -19,6 +17,7 @@
 #include <vtkDICOMImageReader.h>
 #include <vtkImageShrink3D.h>
 #include <vtkMarchingCubes.h>
+#include <vtkRenderer.h>
 #include <math.h>
 #include <fstream>
 #define LINE_LEN 1.
@@ -52,7 +51,6 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_worldActor->SetShaftType(0);
 	m_worldActor->SetAxisLabels(0);
 	m_worldActor->SetCylinderRadius(0.02);
-
 	vtkRenderer *renderer = vtkRenderer::New();
 	vtkRenderer *exportrenderer = vtkRenderer::New();
 	m_renderWindow->SetSize(800, 800);
@@ -87,7 +85,6 @@ registrationWidget::~registrationWidget()
 	m_conedata->Delete();
 	m_coneMapper->Delete();
 	m_coneActor->Delete();
-	m_renderer->Delete();
 	m_renderWindow->Delete();
 	m_renderWindowInteractor->Delete();
 }
@@ -251,7 +248,6 @@ void registrationWidget::readCase(std::string fileName)
 	}
 	else
 	{
-		cout << "dicom" << endl;
 		dicomReader->SetDataByteOrderToLittleEndian();
 		dicomReader->SetDirectoryName(fileName.data());
 		dicomReader->ReleaseDataFlagOn();
@@ -276,9 +272,7 @@ void registrationWidget::readCase(std::string fileName)
 		vtkSmartPointer<vtkTransform> rescaleCT = vtkSmartPointer<vtkTransform>::New();
 		rescaleCT->Scale(0.001, 0.001, 0.001);
 		m_CTActor->SetUserTransform(rescaleCT);
-		vtkSmartPointer<vtkTransform> rescaleToumo = vtkSmartPointer<vtkTransform>::New();
-		rescaleToumo->Scale(0.001, 0.001, 0.001);
-		m_ToumoOriginActor->SetUserTransform(rescaleToumo);
+		m_ToumoOriginActor->SetUserTransform(rescaleCT);
 		m_CTMapper->SetInputConnection(decimate->GetOutputPort());
 		m_ToumoMapper->SetInputConnection(decimate->GetOutputPort());
 		polyOrImage = 1;
