@@ -59,7 +59,9 @@ private:
 	/*vtkDICOMImageReader * m_DICOMreader;
 	vtkImageShrink3D * m_shrink;
 	vtkMarchingCubes * m_CTdata;
-	vtkMarchingCubes * m_Toumodata;*/
+	vtkMarchingCubes * m_Toumodata;
+	vtkDecimatePro *decimate = vtkDecimatePro::New();
+	*/
 	vtkTransform *m_CTorigin2center = vtkTransform::New();
 	vtkMatrix4x4 *m_CTcenter2origin = vtkMatrix4x4::New();
 	double *m_CTcenter;

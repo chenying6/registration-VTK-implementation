@@ -32,30 +32,14 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_reader->Update();
 	m_CTdata = m_reader->GetOutput();
 	m_Toumodata = m_reader->GetOutput();
-	vtkDecimatePro *decimate = vtkDecimatePro::New();
-	decimate->SetInputData(m_CTdata);
-	decimate->SetTargetReduction(0.8);
-	decimate->Update();
-	/*this->readCase();
-	vtkSmartPointer<vtkTransform> rescaleCT = vtkSmartPointer<vtkTransform>::New();
-	rescaleCT->Scale(0.001, 0.001, 0.001);
-	m_CTActor->SetUserTransform(rescaleCT);
-	vtkSmartPointer<vtkTransform> rescaleToumo = vtkSmartPointer<vtkTransform>::New();
-	rescaleToumo->Scale(0.001, 0.001, 0.001);
-	m_ToumoActor->SetUserTransform(rescaleToumo);*/
-	m_CTMapper->SetInputConnection(decimate->GetOutputPort());
-	m_ToumoMapper->SetInputConnection(decimate->GetOutputPort());
-	//m_CTMapper->SetInputData(m_CTdata);
-	//m_ToumoMapper->SetInputData(m_Toumodata);
+	//this->readCase();
+	m_CTMapper->SetInputData(m_CTdata);
+	m_ToumoMapper->SetInputData(m_Toumodata);
 	m_CTActor->SetMapper(m_CTMapper);
 	m_CTActor->GetProperty()->SetColor(1, 1, 0.9412);
 	m_CTcenter = m_CTActor->GetCenter();
 	m_CTorigin2center->Translate(m_CTcenter[0], m_CTcenter[1], m_CTcenter[2]);
 	m_CTcenter2origin->Invert(m_CTorigin2center->GetMatrix(), m_CTcenter2origin);
-	printf("%lf,%lf,%lf", m_CTcenter[0], m_CTcenter[1], m_CTcenter[2]);
-	double *CTOrientation = m_CTActor->GetOrientationWXYZ();
-	printf("The orientation of CT is at: %lf, %lf, %lf", CTOrientation[0], CTOrientation[1], CTOrientation[2]);
-
 	m_ToumoOriginActor->SetMapper(m_ToumoMapper);
 	m_ToumoOriginActor->GetProperty()->SetOpacity(0.5);
 	m_ToumoOriginActor->GetProperty()->SetColor(0.1, 1, 0.1);
@@ -116,7 +100,6 @@ void registrationWidget::setTransformation_right(const int flag, const float x, 
 	vtkMatrix4x4 *transMatrix = vtkMatrix4x4::New();
 	transformation->Identity();
 	transformation->PostMultiply();
-	//左右手坐标系之间的变换
 	transformation->RotateWXYZ(ry, 0, 1, 0);
 	transformation->RotateWXYZ(rx, 1, 0, 0);
 	transformation->RotateWXYZ(rz, 0, 0, 1);
@@ -260,6 +243,17 @@ void registrationWidget::mapCT2Marker()
 //	this->m_Toumodata->ComputeNormalsOn();
 //	this->m_Toumodata->SetValue(0, -150);
 //	this->m_Toumodata->Update();
+//	vtkSmartPointer<vtkTransform> rescaleCT = vtkSmartPointer<vtkTransform>::New();
+//	rescaleCT->Scale(0.001, 0.001, 0.001);
+//	m_CTActor->SetUserTransform(rescaleCT);
+//	vtkSmartPointer<vtkTransform> rescaleToumo = vtkSmartPointer<vtkTransform>::New();
+//	rescaleToumo->Scale(0.001, 0.001, 0.001);
+//	m_ToumoActor->SetUserTransform(rescaleToumo);
+//	decimate->SetInputData(m_CTdata);
+//	decimate->SetTargetReduction(0.8);
+//	decimate->Update();
+//	m_CTMapper->SetInputConnection(decimate->GetOutputPort());
+//	m_ToumoMapper->SetInputConnection(decimate->GetOutputPort());
 //}
 
 void registrationWidget::writeOBJCase()
