@@ -6,7 +6,7 @@
 *Date: 2019-4-17
 */
 
-#include "ui_transparency.h"
+#include "ui_registration.h"
 #include <qwidget.h>
 #include <QVTKWidget.h>
 #include "vtkPolyDataMapper.h"

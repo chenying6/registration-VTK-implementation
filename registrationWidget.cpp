@@ -6,7 +6,6 @@
 change to a universal model whose origin and center are not in the same place;
 */
 #include "registrationWidget.h"
-#include "ui_transparency.h"
 #include <vtkProperty.h>
 #include <vtkColor.h>
 #include <vtkOBJExporter.h>
