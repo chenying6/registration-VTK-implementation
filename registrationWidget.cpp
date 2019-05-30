@@ -13,17 +13,19 @@ change to a universal model whose origin and center are not in the same place;
 #include <vtksys/SystemTools.hxx>
 #include <vtkOBJReader.h>
 #include <vtkSTLReader.h>
+#include <vtkNIFTIImageReader.h>
 #include <vtkDICOMImageReader.h>
 #include <vtkImageShrink3D.h>
 #include <vtkMarchingCubes.h>
 #include <vtkRenderer.h>
 #include <math.h>
 #include <fstream>
-#define LINE_LEN 1.
+#include "vtkSTLWriter.h"
+#define LINE_LEN 100.
 #define PI 3.14159265
-std::string s_dicomName = "E:\\Remebot\\dcm";
-std::string s_modelName = "C:\\Users\\29477\\Desktop\\Decimate.obj";
-
+std::string s_dicomName = "E:\\VTK_Project\\registration_test\\data\\DICOM\\20190408\\10470000";
+std::string s_modelName = "E:\\AR\\Vessel\\registration\\Assets\\10470000y180.obj";
+std::string s_stlName = "C:\\Users\\29477\\Desktop\\registrationTest.stl";
 registrationWidget::registrationWidget(QWidget *parent)
 	: QWidget(parent)
 {
@@ -32,13 +34,16 @@ registrationWidget::registrationWidget(QWidget *parent)
 	connect(ui->present, SIGNAL(clicked()), this, SLOT(setCurrentTransformation()));
 	connect(ui->transform, SIGNAL(clicked()), this, SLOT(mapCT2Toumo()));
 	connect(ui->ct2axis, SIGNAL(clicked()), this, SLOT(mapCT2Marker()));
-	this->readCase(s_modelName);
+	this->readCase(s_stlName);
+	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(s_modelName);
 	m_CTActor->SetMapper(m_CTMapper);
+	m_ToumoOriginActor->SetMapper(m_ToumoMapper);
+	//m_CTActor->SetMapper(imageMapper);
+	//m_ToumoOriginActor->SetMapper(imageMapper);
 	m_CTActor->GetProperty()->SetColor(1, 1, 0.9412);
 	m_CTcenter = m_CTActor->GetCenter();
 	m_CTorigin2center->Translate(m_CTcenter[0], m_CTcenter[1], m_CTcenter[2]);
 	m_CTcenter2origin->Invert(m_CTorigin2center->GetMatrix(), m_CTcenter2origin);
-	m_ToumoOriginActor->SetMapper(m_ToumoMapper);
 	m_ToumoOriginActor->GetProperty()->SetOpacity(0.5);
 	m_ToumoOriginActor->GetProperty()->SetColor(0.1, 1, 0.1);
 	m_MarkerActor->SetTotalLength(LINE_LEN, LINE_LEN, LINE_LEN);
@@ -51,7 +56,6 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_worldActor->SetAxisLabels(0);
 	m_worldActor->SetCylinderRadius(0.02);
 	vtkRenderer *renderer = vtkRenderer::New();
-	vtkRenderer *exportrenderer = vtkRenderer::New();
 	m_renderWindow->SetSize(800, 800);
 	m_renderWindow->AddRenderer(renderer);
 	m_renderWindowInteractor->SetRenderWindow(m_renderWindow);
@@ -61,16 +65,43 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_conedata->SetResolution(10);
 	m_coneMapper->SetInputConnection(m_conedata->GetOutputPort());
 	m_coneActor->SetMapper(m_coneMapper);
-	exportrenderer->AddActor(m_CTActor);
+	vtkTransform *transformation = vtkTransform::New();
 	renderer->AddActor(m_coneActor);
 	renderer->AddActor(m_worldActor);
 	renderer->AddActor(m_CTActor);
 	renderer->AddActor(m_ToumoOriginActor);
 	renderer->AddActor(m_MarkerActor);
 	renderer->SetBackground(.3, .3, .5);
-	m_exportWindow->AddRenderer(exportrenderer);
 	m_renderWindowInteractor->Initialize();
-	//writeOBJCase();
+	transformation->Delete();
+
+	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
+	matrix->SetElement(0, 0, 0.638);
+	matrix->SetElement(0, 1, -0.77);
+	matrix->SetElement(0, 2, 0.026);
+	matrix->SetElement(0, 3, -0.12188);
+	matrix->SetElement(2, 0, -0.78);
+	matrix->SetElement(2, 1, -0.646);
+	matrix->SetElement(2, 2, 0.006);
+	matrix->SetElement(2, 3, 0.841138);
+	matrix->SetElement(1, 0, -0.012);
+	matrix->SetElement(1, 1, 0.028);
+	matrix->SetElement(1, 2, 0.999);
+	matrix->SetElement(1, 3, -1.23499);
+	matrix->SetElement(3, 0, 0);
+	matrix->SetElement(3, 1, 0);
+	matrix->SetElement(3, 2, 0);
+	matrix->SetElement(3, 3, 1);
+
+	vtkMatrix4x4 *rotationM = vtkMatrix4x4::New();
+	rotationM->Zero();
+	rotationM->SetElement(0, 0, -1);
+	rotationM->SetElement(1, 2, -1);
+	rotationM->SetElement(2, 1, -1);
+	rotationM->SetElement(3, 3, 1);
+	vtkMatrix4x4 *newMatrix = vtkMatrix4x4::New();
+	newMatrix->Multiply4x4(rotationM, matrix, newMatrix);
+	//getXYZRotationAngles(newMatrix);
 }
 
 registrationWidget::~registrationWidget()
@@ -88,50 +119,49 @@ registrationWidget::~registrationWidget()
 	m_renderWindowInteractor->Delete();
 }
 
-void registrationWidget::setTransformation_right(const int flag, const float x, const float y, const float z, const float rx, const float ry, const float rz)
+
+vtkMatrix4x4 * registrationWidget::setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
 	vtkTransform *transformation = vtkTransform::New();
-	vtkTransform *conetrans = vtkTransform::New();
-	vtkMatrix4x4 *coneMatrix = vtkMatrix4x4::New();
 	vtkMatrix4x4 *transMatrix = vtkMatrix4x4::New();
 	transformation->Identity();
-	transformation->PostMultiply();
-	transformation->RotateWXYZ(ry, 0, 1, 0);
-	transformation->RotateWXYZ(rx, 1, 0, 0);
-	transformation->RotateWXYZ(rz, 0, 0, 1);
 	transformation->Translate(x, y, z);
+	transformation->RotateZ(rz);
+	transformation->RotateX(rx);
+	transformation->RotateY(ry);
 	transMatrix = transformation->GetMatrix();
-	switch (flag) {
-	case 1:
-		coneMatrix = transMatrix;
-		conetrans->SetMatrix(coneMatrix);
-		m_coneActor->SetUserTransform(conetrans);
-		m_Toumomatrix = m_ToumoOriginActor->GetMatrix();
-		transMatrix->Multiply4x4(m_CTcenter2origin, transMatrix, transMatrix);
-		transMatrix->Multiply4x4(transMatrix, m_Toumomatrix, transMatrix);
-		transformation->SetMatrix(transMatrix);
-		m_ToumoOriginActor->SetUserTransform(transformation);
-		break;
-	case 2:
-		transformation->SetMatrix(transMatrix);
-		m_MarkerActor->SetUserTransform(transformation);
-		break;
-	}
-	transformation = NULL;
-	coneMatrix = NULL;
-	conetrans = NULL;
-	transMatrix = NULL;
+	transMatrix->Print(cout);
+	return transMatrix;
 }
-
+void registrationWidget::transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz)
+{
+	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
+	matrix = setTransformation_right(x, y, z, rx, ry, rz);
+	m_Toumomatrix = m_ToumoOriginActor->GetMatrix();
+	vtkTransform *transformation = vtkTransform::New();
+	transformation->SetMatrix(matrix);
+	m_ToumoOriginActor->SetUserTransform(transformation);
+	getXYZRotationAngles(matrix);
+	writeOBJCase();
+}
+void registrationWidget::transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz){
+	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
+	matrix = setTransformation_right(x, y, z, rx, ry, rz);
+	vtkTransform *transformation = vtkTransform::New();
+	transformation->SetMatrix(matrix);
+	m_MarkerActor->SetUserTransform(transformation);
+}
 void registrationWidget::setTransformation_left(const int flag, const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
-	setTransformation_right(flag, x, y, -z, -rx, -ry, rz);
+	transToumo(x, y, -z, -rx, -ry, rz);
+	transMarker(x, y, -z, -rx, -ry, rz);
 }
 
 void registrationWidget::setCurrentTransformation()
 {
-	this->setTransformation_right(1, .1, .2, .3, 60, 0, 60);
-	this->setTransformation_right(2, .3, .1, .2, 55, 35, 15);
+	vtkMatrix4x4 *ToumoInitial = vtkMatrix4x4::New();
+	transToumo(100, 200, 300, 60, 0, 0);
+	transMarker(.1, .2, .3, 10, 20, 30);
 	m_renderWindow->Render();
 	m_renderWindowInteractor->Start();
 }
@@ -204,6 +234,8 @@ void registrationWidget::mapCT2Marker()
 		vtkMatrix4x4 *CTtrans = vtkMatrix4x4::New();
 		CTtrans->Multiply4x4(CTorigin2markerMatrix, m_CToriginmatrix, CTtrans);
 		CTtrans->Multiply4x4(CTtrans, m_CTcenter2origin, CTtrans);
+		CTtrans->Print(cout);
+		getXYZRotationAngles(CTtrans);
 		vtkTransform *trans = vtkTransform::New();
 		trans->SetMatrix(CTtrans);
 		if(polyOrImage==1)
@@ -225,6 +257,7 @@ void registrationWidget::readCase(std::string fileName)
 	vtkDICOMImageReader *dicomReader = vtkDICOMImageReader::New();
 	vtkPolyData *CTdata = vtkPolyData::New();
 	vtkPolyData *Toumodata = vtkPolyData::New();
+	vtkNIFTIImageReader *nifftiReader = vtkNIFTIImageReader::New();
 	if (extension == ".obj")
 	{
 		polyreader = vtkOBJReader::New();
@@ -244,6 +277,14 @@ void registrationWidget::readCase(std::string fileName)
 		Toumodata = polyreader->GetOutput();
 		m_CTMapper->SetInputData(CTdata);
 		m_ToumoMapper->SetInputData(Toumodata);
+	}
+	else if (extension == ".nii")
+	{
+		nifftiReader = vtkNIFTIImageReader::New();
+		nifftiReader->SetFileName(fileName.data());
+		nifftiReader->Update();
+		niftiImage = nifftiReader->GetOutput();
+		imageMapper->SetInputData(niftiImage);
 	}
 	else
 	{
@@ -281,24 +322,33 @@ void registrationWidget::readCase(std::string fileName)
 
 void registrationWidget::writeOBJCase()
 {
+	vtkRenderer *exportrenderer = vtkRenderer::New();
+	exportrenderer->AddActor(m_ToumoOriginActor);
+	m_exportWindow->AddRenderer(exportrenderer);
 	vtkOBJExporter *objExporter = vtkOBJExporter::New();
 	objExporter->SetFilePrefix("registrationTest");
 	objExporter->SetInput(m_exportWindow);
 	objExporter->Write();
 }
 
-void registrationWidget::getXYZRotationAngles(vtkMatrix4x4 *m)
+void registrationWidget::writeSTLCase(vtkMarchingCubes *data)
 {
-	double anglealpha, anglebeta, anglegamma;
-	double radianalpha, radianbeta, radiangamma;
-	anglealpha = asin(m->GetElement(2, 1))*180.0 / PI;
-	radianalpha = asin(m->GetElement(2, 1));
-	anglebeta = -asin((m->GetElement(2, 0)*1.0 / cos(radianalpha)))*180.0 / PI;
-	anglegamma = -asin((m->GetElement(0, 1)*1.0 / cos(radianalpha)))*180.0 / PI;
-	radianbeta = anglebeta * 1.0 / 180.0 * PI;
-	radiangamma = anglegamma * 1.0 / 180.0 * PI;
-	cout << "the angles are:" << endl;
-	printf("%lf,%lf,%lf\n", anglealpha, anglebeta, anglegamma);
+	vtkSTLWriter *stlExporter = vtkSTLWriter::New();
+	//stlExporter->SetInputData(data);
+	stlExporter->SetInputConnection(data->GetOutputPort());
+	stlExporter->SetFileTypeToBinary();
+	stlExporter->SetFileName("C:\\Users\\29477\\Desktop\\registrationTest.stl");
+	stlExporter->Update();
+	stlExporter->Write();
+}
+
+void registrationWidget::getXYZRotationAngles(vtkMatrix4x4 *matrix)
+{
+	double y1 = 0, x1 = 0, z1 = 0;
+	y1 = atan2(-matrix->GetElement(2, 0), matrix->GetElement(2, 2))*180.0 / PI;
+	x1 = atan2(matrix->GetElement(2, 1), sqrt(matrix->GetElement(2, 0)*matrix->GetElement(2, 0) + matrix->GetElement(2, 2)*matrix->GetElement(2, 2)))*180.0 / PI;
+	z1 = atan2(-matrix->GetElement(0, 1), matrix->GetElement(1, 1))*180.0 / PI;
+	printf("%lf, %lf, %lf", x1, y1, z1);
 }
 
 void registrationWidget::outputMatrix(vtkMatrix4x4 *m)
