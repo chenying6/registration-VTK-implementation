@@ -24,28 +24,33 @@ change to a universal model whose origin and center are not in the same place;
 #define LINE_LEN 100.
 #define PI 3.14159265
 std::string s_dicomName = "E:\\VTK_Project\\registration_test\\data\\DICOM\\20190408\\10470000";
-std::string s_modelName = "E:\\AR\\Vessel\\registration\\Assets\\10470000y180.obj";
+std::string s_modelName = "E:\\AR\\Vessel\\registration\\Assets\\10470000origin.obj";
 std::string s_stlName = "C:\\Users\\29477\\Desktop\\registrationTest.stl";
 registrationWidget::registrationWidget(QWidget *parent)
 	: QWidget(parent)
 {
 	ui = new Ui_Form;
 	ui->setupUi(this);
-	connect(ui->present, SIGNAL(clicked()), this, SLOT(setCurrentTransformation()));
+	connect(ui->present, SIGNAL(clicked()), this, SLOT(setPresentStates()));
 	connect(ui->transform, SIGNAL(clicked()), this, SLOT(mapCT2Toumo()));
 	connect(ui->ct2axis, SIGNAL(clicked()), this, SLOT(mapCT2Marker()));
 	this->readCase(s_stlName);
-	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(s_modelName);
-	m_CTActor->SetMapper(m_CTMapper);
-	m_ToumoOriginActor->SetMapper(m_ToumoMapper);
-	//m_CTActor->SetMapper(imageMapper);
-	//m_ToumoOriginActor->SetMapper(imageMapper);
+	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(s_stlName);
+	if(extension==" "){
+		m_CTActor->SetMapper(imageMapper);
+	    m_ToumoOriginActor->SetMapper(imageMapper);
+	}
+	else {
+		m_CTActor->SetMapper(m_CTMapper);
+		m_ToumoOriginActor->SetMapper(m_ToumoMapper);
+	}	
 	m_CTActor->GetProperty()->SetColor(1, 1, 0.9412);
 	m_CTcenter = m_CTActor->GetCenter();
 	m_CTorigin2center->Translate(m_CTcenter[0], m_CTcenter[1], m_CTcenter[2]);
 	m_CTcenter2origin->Invert(m_CTorigin2center->GetMatrix(), m_CTcenter2origin);
-	m_ToumoOriginActor->GetProperty()->SetOpacity(0.5);
+	m_ToumoOriginActor->GetProperty()->SetOpacity(0.9);
 	m_ToumoOriginActor->GetProperty()->SetColor(0.1, 1, 0.1);
+
 	m_MarkerActor->SetTotalLength(LINE_LEN, LINE_LEN, LINE_LEN);
 	m_MarkerActor->SetShaftType(0);
 	m_MarkerActor->SetAxisLabels(0);
@@ -65,7 +70,6 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_conedata->SetResolution(10);
 	m_coneMapper->SetInputConnection(m_conedata->GetOutputPort());
 	m_coneActor->SetMapper(m_coneMapper);
-	vtkTransform *transformation = vtkTransform::New();
 	renderer->AddActor(m_coneActor);
 	renderer->AddActor(m_worldActor);
 	renderer->AddActor(m_CTActor);
@@ -73,26 +77,12 @@ registrationWidget::registrationWidget(QWidget *parent)
 	renderer->AddActor(m_MarkerActor);
 	renderer->SetBackground(.3, .3, .5);
 	m_renderWindowInteractor->Initialize();
-	transformation->Delete();
-
-	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
-	matrix->SetElement(0, 0, 0.638);
-	matrix->SetElement(0, 1, -0.77);
-	matrix->SetElement(0, 2, 0.026);
-	matrix->SetElement(0, 3, -0.12188);
-	matrix->SetElement(2, 0, -0.78);
-	matrix->SetElement(2, 1, -0.646);
-	matrix->SetElement(2, 2, 0.006);
-	matrix->SetElement(2, 3, 0.841138);
-	matrix->SetElement(1, 0, -0.012);
-	matrix->SetElement(1, 1, 0.028);
-	matrix->SetElement(1, 2, 0.999);
-	matrix->SetElement(1, 3, -1.23499);
-	matrix->SetElement(3, 0, 0);
-	matrix->SetElement(3, 1, 0);
-	matrix->SetElement(3, 2, 0);
-	matrix->SetElement(3, 3, 1);
-
+	char Toumo[4][4] = {0.6380,  -0.770,  0.026,  -0.12188,
+						-0.012,   0.028,  0.999,  -1.23499,
+						-0.780,  -0.646, -0.006,  0.841138,
+							 0,	      0,      0,         1
+	};
+	vtkMatrix4x4 *matrix = setCurrentMatrix(Toumo);
 	vtkMatrix4x4 *rotationM = vtkMatrix4x4::New();
 	rotationM->Zero();
 	rotationM->SetElement(0, 0, -1);
@@ -101,7 +91,7 @@ registrationWidget::registrationWidget(QWidget *parent)
 	rotationM->SetElement(3, 3, 1);
 	vtkMatrix4x4 *newMatrix = vtkMatrix4x4::New();
 	newMatrix->Multiply4x4(rotationM, matrix, newMatrix);
-	//getXYZRotationAngles(newMatrix);
+	//getXYZRotationAngles(newMatrix);	
 }
 
 registrationWidget::~registrationWidget()
@@ -119,7 +109,6 @@ registrationWidget::~registrationWidget()
 	m_renderWindowInteractor->Delete();
 }
 
-
 vtkMatrix4x4 * registrationWidget::setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
 	vtkTransform *transformation = vtkTransform::New();
@@ -133,17 +122,38 @@ vtkMatrix4x4 * registrationWidget::setTransformation_right(const float x, const 
 	transMatrix->Print(cout);
 	return transMatrix;
 }
+
+vtkMatrix4x4 * registrationWidget::setTransformation_left(const float x, const float y, const float z, const float rx, const float ry, const float rz)
+{
+	vtkMatrix4x4 *matrix = setTransformation_right(-x, y, z, rx, -ry, -rz);
+	return matrix;
+}
+
 void registrationWidget::transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
-	matrix = setTransformation_right(x, y, z, rx, ry, rz);
-	m_Toumomatrix = m_ToumoOriginActor->GetMatrix();
+	matrix = setTransformation_left(x, y, z, rx, ry, rz);
 	vtkTransform *transformation = vtkTransform::New();
 	transformation->SetMatrix(matrix);
 	m_ToumoOriginActor->SetUserTransform(transformation);
+	transformation->Delete();
 	getXYZRotationAngles(matrix);
-	writeOBJCase();
+	//writeOBJCase();
 }
+
+vtkMatrix4x4 *  registrationWidget::objTrans(vtkMatrix4x4 *m){
+	//In VTK, the obj model should firstly rotate around X with 90 degree, then back-direct the x axis
+	
+	//to do the back-direct
+	m->SetElement(0, 1, -m->GetElement(0, 1));
+	m->SetElement(0, 2, -m->GetElement(0, 2));
+	m->SetElement(1, 2, -m->GetElement(1, 2));
+	m->SetElement(2, 1, -m->GetElement(2, 1));
+	//now, set the translation along x axis with negative translation values
+	m->SetElement(0, 3, -m->GetElement(0, 3));
+	return m;
+}
+
 void registrationWidget::transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz){
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 	matrix = setTransformation_right(x, y, z, rx, ry, rz);
@@ -151,19 +161,49 @@ void registrationWidget::transMarker(const float x, const float y, const float z
 	transformation->SetMatrix(matrix);
 	m_MarkerActor->SetUserTransform(transformation);
 }
-void registrationWidget::setTransformation_left(const int flag, const float x, const float y, const float z, const float rx, const float ry, const float rz)
-{
-	transToumo(x, y, -z, -rx, -ry, rz);
-	transMarker(x, y, -z, -rx, -ry, rz);
-}
 
-void registrationWidget::setCurrentTransformation()
+void registrationWidget::setPresentStates()
 {
+	QString qrx=ui->rx->toPlainText(); 
+	float rx = atof(qrx.toStdString().c_str());
+	QString qry = ui->ry->toPlainText();
+	float ry = atof(qry.toStdString().c_str());
+	QString qrz = ui->rz->toPlainText();
+	float rz = atof(qrz.toStdString().c_str());
+
+	QString qx = ui->x->toPlainText();
+	float x = atof(qx.toStdString().c_str());
+	QString qy = ui->y->toPlainText();
+	float y = atof(qy.toStdString().c_str());
+	QString qz = ui->z->toPlainText();
+	float z = atof(qz.toStdString().c_str());
+
 	vtkMatrix4x4 *ToumoInitial = vtkMatrix4x4::New();
-	transToumo(100, 200, 300, 60, 0, 0);
-	transMarker(.1, .2, .3, 10, 20, 30);
+	transToumo(100*x, 100*y, 100*z, rx, ry, rz);
+	//transMarker(.1, .2, .3, 10, 20, 30);
 	m_renderWindow->Render();
 	m_renderWindowInteractor->Start();
+}
+
+vtkMatrix4x4 * registrationWidget::setCurrentMatrix(char m[4][4]) {
+	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
+	matrix->SetElement(0, 0, m[0][0]);
+	matrix->SetElement(0, 1, m[0][1]);
+	matrix->SetElement(0, 2, m[0][2]);
+	matrix->SetElement(0, 3, m[0][3]);
+	matrix->SetElement(1, 0, m[1][0]);
+	matrix->SetElement(1, 1, m[1][1]);
+	matrix->SetElement(1, 2, m[1][2]);
+	matrix->SetElement(1, 3, m[1][3]);
+	matrix->SetElement(2, 0, m[2][0]);
+	matrix->SetElement(2, 1, m[2][1]);
+	matrix->SetElement(2, 2, m[2][2]);
+	matrix->SetElement(2, 3, m[2][3]);
+	matrix->SetElement(3, 0, m[3][0]);
+	matrix->SetElement(3, 1, m[3][1]);
+	matrix->SetElement(3, 2, m[3][2]);
+	matrix->SetElement(3, 3, m[3][3]);
+	return matrix;
 }
 
 void registrationWidget::mapCT2Toumo()
@@ -250,7 +290,8 @@ void registrationWidget::mapCT2Marker()
 void registrationWidget::readCase(std::string fileName)
 {
 	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(fileName);
-	cout << "the extension of the filename: ";
+	ui->display->setText("the extension of the filename: ");
+	ui->display->setText("\n");
 	cout << extension << endl;
 	vtkAlgorithm *reader = vtkAlgorithm::New();
 	vtkAbstractPolyDataReader *polyreader;
@@ -316,8 +357,7 @@ void registrationWidget::readCase(std::string fileName)
 		m_CTMapper->SetInputConnection(decimate->GetOutputPort());
 		m_ToumoMapper->SetInputConnection(decimate->GetOutputPort());
 		polyOrImage = 1;
-	}
-	
+	}	
 }
 
 void registrationWidget::writeOBJCase()

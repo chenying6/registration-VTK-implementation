@@ -33,19 +33,21 @@ public:
 	registrationWidget(QWidget *parent = 0);
 	~registrationWidget();
 public slots:
-	void setCurrentTransformation();
+	void setPresentStates();
 	void mapCT2Toumo();
 	void mapCT2Marker();
 private:
 	vtkMatrix4x4 * setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz);
 	void transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz);
 	void transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz);
-	void setTransformation_left(const int flag, const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	vtkMatrix4x4 * setTransformation_left(const float x, const float y, const float z, const float rx, const float ry, const float rz);
 	void readCase(std::string fileName);
 	void writeOBJCase();
 	void writeSTLCase(vtkMarchingCubes *data);
 	void getXYZRotationAngles(vtkMatrix4x4 *m);
 	void outputMatrix(vtkMatrix4x4 *m);
+	vtkMatrix4x4 *  objTrans(vtkMatrix4x4 *m);
+	vtkMatrix4x4* setCurrentMatrix(char matrix[4][4]);
 
 private:
 	Ui_Form *ui;
