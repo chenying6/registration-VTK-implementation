@@ -19,13 +19,14 @@ change to a universal model whose origin and center are not in the same place;
 #include <vtkMarchingCubes.h>
 #include <vtkRenderer.h>
 #include <math.h>
+#include <iostream>
 #include <fstream>
 #include "vtkSTLWriter.h"
 #define LINE_LEN 100.
 #define PI 3.14159265
 std::string s_dicomName = "E:\\VTK_Project\\registration_test\\data\\DICOM\\20190408\\10470000";
 std::string s_modelName = "E:\\AR\\Vessel\\registration\\Assets\\10470000origin.obj";
-std::string s_stlName = "C:\\Users\\29477\\Desktop\\registrationTest.stl";
+std::string s_stlName = "E:\\VTK\\VTK-8.1.1_build\\ExternalData\\Testing\\Data\\42400-IDGH.stl";
 registrationWidget::registrationWidget(QWidget *parent)
 	: QWidget(parent)
 {
@@ -50,7 +51,6 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_CTcenter2origin->Invert(m_CTorigin2center->GetMatrix(), m_CTcenter2origin);
 	m_ToumoOriginActor->GetProperty()->SetOpacity(0.9);
 	m_ToumoOriginActor->GetProperty()->SetColor(0.1, 1, 0.1);
-
 	m_MarkerActor->SetTotalLength(LINE_LEN, LINE_LEN, LINE_LEN);
 	m_MarkerActor->SetShaftType(0);
 	m_MarkerActor->SetAxisLabels(0);
@@ -92,6 +92,8 @@ registrationWidget::registrationWidget(QWidget *parent)
 	vtkMatrix4x4 *newMatrix = vtkMatrix4x4::New();
 	newMatrix->Multiply4x4(rotationM, matrix, newMatrix);
 	//getXYZRotationAngles(newMatrix);	
+
+
 }
 
 registrationWidget::~registrationWidget()
@@ -111,6 +113,7 @@ registrationWidget::~registrationWidget()
 
 vtkMatrix4x4 * registrationWidget::setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
+	std::ofstream outTXT("C:\\Users\\cy\\Desktop\\matrix.txt", ios::out);
 	vtkTransform *transformation = vtkTransform::New();
 	vtkMatrix4x4 *transMatrix = vtkMatrix4x4::New();
 	transformation->Identity();
@@ -119,7 +122,8 @@ vtkMatrix4x4 * registrationWidget::setTransformation_right(const float x, const 
 	transformation->RotateX(rx);
 	transformation->RotateY(ry);
 	transMatrix = transformation->GetMatrix();
-	transMatrix->Print(cout);
+	transMatrix->Print(outTXT);
+	outTXT.close();
 	return transMatrix;
 }
 
@@ -207,14 +211,15 @@ vtkMatrix4x4 * registrationWidget::setCurrentMatrix(char m[4][4]) {
 }
 
 void registrationWidget::mapCT2Toumo()
-{	
+{
+	std::ofstream outTXT("C:\\Users\\cy\\Desktop\\matrix.txt", ios::out);
 	m_Markermatrix = m_MarkerActor->GetMatrix();
 	m_CToriginmatrix = m_CTActor->GetMatrix();
 	m_Toumomatrix = m_ToumoOriginActor->GetMatrix();
 #pragma region test
 	vtkMatrix4x4 *world2MarkerMatrix = m_Markermatrix;
 	printf("The marker pistion and rotation:\n");
-	world2MarkerMatrix->Print(cout);
+	world2MarkerMatrix->Print(outTXT);
 	getXYZRotationAngles(world2MarkerMatrix);
 	vtkMatrix4x4 *Marker2ToumoMatrix = vtkMatrix4x4::New();
 	vtkMatrix4x4 *Marker2worldMatrix = vtkMatrix4x4::New();
@@ -222,18 +227,18 @@ void registrationWidget::mapCT2Toumo()
 	vtkMatrix4x4 *Marker2CTMatrix = vtkMatrix4x4::New();
 	Marker2CTMatrix->Multiply4x4(m_CToriginmatrix, Marker2worldMatrix, Marker2CTMatrix);
 	printf("The CT in marker coordinates:\n");
-	Marker2CTMatrix->Print(cout);
+	Marker2CTMatrix->Print(outTXT);
 	getXYZRotationAngles(Marker2CTMatrix);
 	Marker2ToumoMatrix->Multiply4x4(m_Toumomatrix, Marker2worldMatrix, Marker2ToumoMatrix);
 	printf("The Toumo in marker coordinates:\n");
-	Marker2ToumoMatrix->Print(cout);
+	Marker2ToumoMatrix->Print(outTXT);
 	getXYZRotationAngles(Marker2ToumoMatrix);
 	vtkMatrix4x4 *CT2MarkerMatrix = vtkMatrix4x4::New();
 	CT2MarkerMatrix->Invert(Marker2CTMatrix, CT2MarkerMatrix);
 	vtkMatrix4x4 *CT2ToumoMatrix = vtkMatrix4x4::New();
 	CT2ToumoMatrix->Multiply4x4(Marker2ToumoMatrix, CT2MarkerMatrix, CT2ToumoMatrix);
 	printf("the CT2Toumo matrix is:\n");
-	CT2ToumoMatrix->Print(cout);
+	CT2ToumoMatrix->Print(outTXT);
 	getXYZRotationAngles(CT2ToumoMatrix);
 	vtkMatrix4x4 *transformedCTMatrix = vtkMatrix4x4::New();
 	transformedCTMatrix->Multiply4x4(CT2ToumoMatrix, Marker2CTMatrix, transformedCTMatrix);
@@ -245,21 +250,13 @@ void registrationWidget::mapCT2Toumo()
 	m_renderWindow->Render();
 	m_renderWindowInteractor->Start();
 
-	ofstream outFile("matrix.txt", fstream::trunc);
-	for (int i = 0; i < index; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			outFile<<outMatrix[i][j]<<" ";
-		}
-		outFile << endl;
-	}
-	outFile.close();
+	outTXT.close();
 }
 
 void registrationWidget::mapCT2Marker()
 {
 	printf("\n%d\n", firstClick2Marker);
+	std::ofstream outTXT("C:\\Users\\cy\\Desktop\\matrix.txt", ios::out);
 	if (firstClick2Marker == 0)
 	{
 		printf("%lf,%lf,%lf", m_CTcenter[0], m_CTcenter[1], m_CTcenter[2]);
@@ -274,7 +271,7 @@ void registrationWidget::mapCT2Marker()
 		vtkMatrix4x4 *CTtrans = vtkMatrix4x4::New();
 		CTtrans->Multiply4x4(CTorigin2markerMatrix, m_CToriginmatrix, CTtrans);
 		CTtrans->Multiply4x4(CTtrans, m_CTcenter2origin, CTtrans);
-		CTtrans->Print(cout);
+		CTtrans->Print(outTXT);
 		getXYZRotationAngles(CTtrans);
 		vtkTransform *trans = vtkTransform::New();
 		trans->SetMatrix(CTtrans);
@@ -285,14 +282,15 @@ void registrationWidget::mapCT2Marker()
 		m_renderWindowInteractor->Start();
 	}
 	firstClick2Marker = 1;
+	outTXT.close();
 }
 
 void registrationWidget::readCase(std::string fileName)
 {
 	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(fileName);
-	ui->display->setText("the extension of the filename: ");
-	ui->display->setText("\n");
-	cout << extension << endl;
+	ui->display->insertPlainText("the extension of the filename: ");
+	ui->display->insertPlainText(QString::fromStdString(extension));
+	ui->display->insertPlainText(QString::fromStdString("\n"));
 	vtkAlgorithm *reader = vtkAlgorithm::New();
 	vtkAbstractPolyDataReader *polyreader;
 	vtkDICOMImageReader *dicomReader = vtkDICOMImageReader::New();

@@ -74,5 +74,6 @@ private:
 
 	vtkImageData *niftiImage = vtkImageData::New();
 	vtkDataSetMapper *imageMapper = vtkDataSetMapper::New();
+
 };
 #endif
