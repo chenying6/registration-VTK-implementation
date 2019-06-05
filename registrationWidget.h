@@ -46,8 +46,9 @@ private:
 	void writeOBJCase();
 	void writeSTLCase(vtkMarchingCubes *data);
 	void getXYZRotationAngles(vtkMatrix4x4 *m);
-	void outputMatrix(vtkMatrix4x4 *m);
 	void constructCompositeModel();
+	void exportCompositeModel();
+	void prepareExportCTModel();
 	vtkMatrix4x4*  objTrans(vtkMatrix4x4 *m);
 	vtkMatrix4x4* setCurrentMatrix(char matrix[4][4]);
 	vtkMatrix4x4* getmarker2CToriginMatrix();

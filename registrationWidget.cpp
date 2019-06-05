@@ -31,7 +31,7 @@ change to a universal model whose origin and center are not in the same place;
 #define LINE_LEN 1.
 #define PI 3.14159265
 std::string s_dicomName = "E:\\VTK_Project\\registration_test\\data\\DICOM\\20190408\\10470000";
-std::string s_modelName = "E:\\VTK_Project\\registration_test\\build\\tixing.obj";
+std::string s_modelName = "E:\\VTK_Project\\registration_test\\build\\zidingyi.obj";
 std::string s_stlName = "C:\\Users\\29477\\Desktop\\registrationTest.stl";
 registrationWidget::registrationWidget(QWidget *parent)
 	: QWidget(parent)
@@ -69,7 +69,6 @@ registrationWidget::registrationWidget(QWidget *parent)
 	initialInvertMatrix->Print(cout);
 	getXYZRotationAngles(initialInvertMatrix);
 #pragma endregion test_back_transformation
-
 	m_MarkerActor->SetTotalLength(LINE_LEN, LINE_LEN, LINE_LEN);
 	m_MarkerActor->SetShaftType(0);
 	m_MarkerActor->SetAxisLabels(0);
@@ -82,17 +81,14 @@ registrationWidget::registrationWidget(QWidget *parent)
 	vtkRenderer *renderer = vtkRenderer::New();
 	m_renderWindow->SetSize(800, 800);
 	m_renderWindow->AddRenderer(renderer);	
-	
+	prepareExportCTModel();
 	renderer->AddActor(m_worldActor);
 	renderer->AddActor(m_CTActor);
-	renderer->AddActor(m_ToumoOriginActor);
+	//renderer->AddActor(m_ToumoOriginActor);
 	renderer->AddActor(m_MarkerActor);
 	renderer->SetBackground(.3, .3, .5);
 	m_renderWindowInteractor->SetRenderWindow(ui->qvtkWidget->GetRenderWindow());
 	ui->qvtkWidget->SetRenderWindow(m_renderWindow);
-	vtkRenderer *exportrenderer = vtkRenderer::New();
-	exportrenderer->AddActor(m_CTActor);
-	m_exportWindow->AddRenderer(exportrenderer);
 	m_renderWindowInteractor->Initialize();
 	char Toumo[4][4] = {0.6380,  -0.770,  0.026,  -0.12188,
 						-0.012,   0.028,  0.999,  -1.23499,
@@ -130,9 +126,9 @@ vtkMatrix4x4 * registrationWidget::setTransformation_right(const float x, const 
 	vtkMatrix4x4 *transMatrix = vtkMatrix4x4::New();
 	transformation->Identity();
 	transformation->Translate(x, y, z);
-	transformation->RotateZ(rz);
-	transformation->RotateX(rx);
 	transformation->RotateY(ry);
+	transformation->RotateX(rx);
+	transformation->RotateZ(rz);
 	transMatrix = transformation->GetMatrix();
 	transMatrix->Print(outTXT);
 	outTXT.close();
@@ -148,37 +144,21 @@ vtkMatrix4x4 * registrationWidget::setTransformation_left(const float x, const f
 void registrationWidget::transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
-	matrix = setTransformation_right(x, y, z, rx, ry, rz);
+	matrix = setTransformation_left(x, y, z, rx, ry, rz);
 	m_Toumomatrix = m_ToumoOriginActor->GetUserMatrix();
 	matrix->Multiply4x4(matrix, m_Toumomatrix, matrix);
-	vtkTransform *transformation = vtkTransform::New();
-	transformation->SetMatrix(matrix);
-	m_ToumoOriginActor->SetUserTransform(transformation);
-	transformation->Delete();
+	m_ToumoOriginActor->SetUserMatrix(matrix);
 	ui->display->insertPlainText("the present transformation of Toumo:\n");
 	getXYZRotationAngles(matrix);
-	//writeOBJCase();
 }
 void registrationWidget::transCT(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 	matrix = setTransformation_left(x, y, z, rx, ry, rz);
-	vtkTransform *transformation = vtkTransform::New();
-	transformation->SetMatrix(matrix);
-	m_CTActor->SetUserTransform(transformation);
-	transformation->Delete();
+	m_CTActor->SetUserMatrix(matrix);
 	ui->display->insertPlainText("the present transformation of CT:\n");
 	getXYZRotationAngles(matrix);
-
-	//用于最开始生成梯形模型
-	/*vtkPolyDataMapper *compositeMapper = vtkPolyDataMapper::New();
-	constructCompositeModel();
-	compositeMapper->SetInputData(compositepolydata);
-	vtkActor *compositeActor = vtkActor::New();
-	compositeActor->SetMapper(compositeMapper);
-	vtkRenderer *exportrenderer = vtkRenderer::New();
-	exportrenderer->AddActor(compositeActor);*/
-	
+	//exportCompositeModel();
 	writeOBJCase();
 }
 vtkMatrix4x4 *  registrationWidget::objTrans(vtkMatrix4x4 *m){
@@ -220,8 +200,8 @@ void registrationWidget::setPresentStates()
 	QString qz = ui->z->toPlainText();
 	float z = atof(qz.toStdString().c_str());
 
-	transToumo(x, y, z, rx, ry, rz);
-	//transCT(x, y, z, rx, ry, rz);
+	//transToumo(x, y, z, rx, ry, rz);
+	transCT(x, y, z, rx, ry, rz);
 
 	QString qrx_2 = ui->rx_2->toPlainText();
 	float rx_2 = atof(qrx_2.toStdString().c_str());
@@ -413,8 +393,7 @@ void registrationWidget::readCase(std::string fileName)
 }
 
 void registrationWidget::writeOBJCase()
-{
-	
+{	
 	vtkOBJExporter *objExporter = vtkOBJExporter::New();
 	objExporter->SetFilePrefix("registrationTest");
 	objExporter->SetInput(m_exportWindow);
@@ -451,18 +430,6 @@ void registrationWidget::getXYZRotationAngles(vtkMatrix4x4 *matrix)
 	ui->display->insertPlainText("\n");
 }
 
-void registrationWidget::outputMatrix(vtkMatrix4x4 *m)
-{
-	for (int i = 0; i < 4; i++)
-	{
-		for (int j = 0; j < 4; j++)
-		{
-			outMatrix[index][j] = m->GetElement(i, j);
-		}
-		index++;
-	}
-}
-
 vtkMatrix4x4* registrationWidget::getmarker2CToriginMatrix() {
 	std::ofstream outTXT("C:\\Users\\29477\\Desktop\\matrix.txt", ios::out);
 	m_Markermatrix = m_MarkerActor->GetMatrix();
@@ -479,49 +446,36 @@ vtkMatrix4x4* registrationWidget::getmarker2CToriginMatrix() {
 void registrationWidget::constructCompositeModel() {
 	vtkPoints *points = vtkPoints::New();
 	points->InsertNextPoint(0.0, 0.0, 0.0);
-	points->InsertNextPoint(0.0, 0.0, -10.0);
 	points->InsertNextPoint(3.0, 0.0, 0.0);
 	points->InsertNextPoint(3.0, 0.0, -10.0);
 	points->InsertNextPoint(1.0, 2.0, 0.0);
-	points->InsertNextPoint(1.0, 2.0, -10.0);
-	points->InsertNextPoint(2.0, 2.0, 0.0);
-	points->InsertNextPoint(2.0, 2.0, -10.0);	
+	points->InsertNextPoint(2.0, 2.0, 0.0);	
 	vtkPolygon *polygon1 = vtkPolygon::New();
 	polygon1->GetPointIds()->SetNumberOfIds(4);
 	polygon1->GetPointIds()->SetId(0, 0);
 	polygon1->GetPointIds()->SetId(1, 1);
-	polygon1->GetPointIds()->SetId(2, 3);
-	polygon1->GetPointIds()->SetId(3, 2);
+	polygon1->GetPointIds()->SetId(2, 4);
+	polygon1->GetPointIds()->SetId(3, 3);
 	vtkPolygon *polygon2 = vtkPolygon::New();
-	polygon2->GetPointIds()->SetNumberOfIds(4);
-	polygon2->GetPointIds()->SetId(0, 0);
+	polygon2->GetPointIds()->SetNumberOfIds(3);
+	polygon2->GetPointIds()->SetId(0, 1);
 	polygon2->GetPointIds()->SetId(1, 2);
-	polygon2->GetPointIds()->SetId(2, 6);
-	polygon2->GetPointIds()->SetId(3, 4);
+	polygon2->GetPointIds()->SetId(2, 4);
 	vtkPolygon *polygon3 = vtkPolygon::New();
-	polygon3->GetPointIds()->SetNumberOfIds(4);
-	polygon3->GetPointIds()->SetId(0, 4);
-	polygon3->GetPointIds()->SetId(1, 6);
-	polygon3->GetPointIds()->SetId(2, 7);
-	polygon3->GetPointIds()->SetId(3, 5);
+	polygon3->GetPointIds()->SetNumberOfIds(3);
+	polygon3->GetPointIds()->SetId(0, 0);
+	polygon3->GetPointIds()->SetId(1, 3);
+	polygon3->GetPointIds()->SetId(2, 2);
 	vtkPolygon *polygon4 = vtkPolygon::New();
-	polygon4->GetPointIds()->SetNumberOfIds(4);
-	polygon4->GetPointIds()->SetId(0, 1);
-	polygon4->GetPointIds()->SetId(1, 0);
+	polygon4->GetPointIds()->SetNumberOfIds(3);
+	polygon4->GetPointIds()->SetId(0, 2);
+	polygon4->GetPointIds()->SetId(1, 3);
 	polygon4->GetPointIds()->SetId(2, 4);
-	polygon4->GetPointIds()->SetId(3, 5);
 	vtkPolygon *polygon5 = vtkPolygon::New();
-	polygon5->GetPointIds()->SetNumberOfIds(4);
-	polygon5->GetPointIds()->SetId(0, 1);
-	polygon5->GetPointIds()->SetId(1, 5);
-	polygon5->GetPointIds()->SetId(2, 7);
-	polygon5->GetPointIds()->SetId(3, 3);
-	vtkPolygon *polygon6 = vtkPolygon::New();
-	polygon6->GetPointIds()->SetNumberOfIds(4);
-	polygon6->GetPointIds()->SetId(0, 2);
-	polygon6->GetPointIds()->SetId(1, 3);
-	polygon6->GetPointIds()->SetId(2, 7);
-	polygon6->GetPointIds()->SetId(3, 6);
+	polygon5->GetPointIds()->SetNumberOfIds(3);
+	polygon5->GetPointIds()->SetId(0, 0);
+	polygon5->GetPointIds()->SetId(1, 2);
+	polygon5->GetPointIds()->SetId(2, 1);
 
 	vtkCellArray *cell = vtkCellArray::New();
 	cell->InsertNextCell(polygon1);
@@ -529,9 +483,25 @@ void registrationWidget::constructCompositeModel() {
 	cell->InsertNextCell(polygon3);
 	cell->InsertNextCell(polygon4);
 	cell->InsertNextCell(polygon5);
-	cell->InsertNextCell(polygon6);
 	compositepolydata->SetPoints(points);
 	compositepolydata->SetPolys(cell);	
+}
+void registrationWidget::exportCompositeModel() {
+	//用于最开始生成自定义组合模型
+	vtkPolyDataMapper *compositeMapper = vtkPolyDataMapper::New();
+	constructCompositeModel();
+	compositeMapper->SetInputData(compositepolydata);
+	vtkActor *compositeActor = vtkActor::New();
+	compositeActor->SetMapper(compositeMapper);
+	vtkRenderer *exportrenderer = vtkRenderer::New();
+	exportrenderer->AddActor(compositeActor);
+	m_exportWindow->AddRenderer(exportrenderer);
+	writeOBJCase();
+}
+void  registrationWidget::prepareExportCTModel(){
+	vtkRenderer *exportrenderer = vtkRenderer::New();
+	exportrenderer->AddActor(m_CTActor);
+	m_exportWindow->AddRenderer(exportrenderer);
 }
 int main(int argc, char *argv[]) {
 	QApplication app(argc, argv);
