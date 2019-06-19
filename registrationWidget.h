@@ -21,7 +21,6 @@
 #include "vtkMatrix4x4.h"
 #include "vtkImageData.h"
 #include "vtkDataSetMapper.h"
-
 using namespace std;
 namespace Ui {
 	class marchingCubeAPP : public Ui_Form {};
@@ -33,24 +32,44 @@ public:
 	registrationWidget(QWidget *parent = 0);
 	~registrationWidget();
 public slots:
+	//设置当前头模、marker板的位姿
 	void setPresentStates();
+	//将CT影像配准到头颅模型上
 	void mapCT2Toumo();
+	//将CT影像在Marker板坐标系中的表示表现出来
 	void mapCT2Marker();
+	//添加代表头颅上marker的小球作为标记
+	void addBalls();
 private:
+	//以右手坐标系的方式设置位姿
 	vtkMatrix4x4 * setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz);
-	void transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz);
-	void transCT(const float x, const float y, const float z, const float rx, const float ry, const float rz);
-	void transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	//以左手坐标系的方式设置位姿，使其在Unity中的表示与期望的一样
 	vtkMatrix4x4 * setTransformation_left(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	//改变Toumo的位姿
+	void transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	//改变CT的位姿
+	void transCT(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	//改变marker板的位姿
+	void transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	//根据输入的文件的类型，进行文件的读取
 	void readCase(std::string fileName);
+	//以obj格式导出模型
 	void writeOBJCase();
+	//以STL格式导出模型
 	void writeSTLCase(vtkMarchingCubes *data);
-	void getXYZRotationAngles(vtkMatrix4x4 *m);
+	//根据先平移，再Z,X,Y的旋转顺序，计算绕各轴的旋转角度；注意，使用哪一个函数，应与setTransformation_right对应
+	void getZXYRotationAngles(vtkMatrix4x4 *m);
+	//根据先平移，再Y,X,Z的旋转顺序，计算绕各轴的旋转角度；注意，使用哪一个函数，应与setTransformation_right对应
+	void getYXZRotationAngles(vtkMatrix4x4 *m);
+	//自定义绘制组合模型
 	void constructCompositeModel();
+	//将组合模型输出
 	void exportCompositeModel();
+	//为输出CT模型做准备，在最开始初始化，而不是每一次发生调用时做准备（会报错）
 	void prepareExportCTModel();
 	vtkMatrix4x4*  objTrans(vtkMatrix4x4 *m);
-	vtkMatrix4x4* setCurrentMatrix(char matrix[4][4]);
+	vtkMatrix4x4* setCurrentMatrix(double matrix[4][4]);
+	//得到由marker变换到CT的变换矩阵，即CT在marker坐标系中的表示
 	vtkMatrix4x4* getmarker2CToriginMatrix();
 
 private:

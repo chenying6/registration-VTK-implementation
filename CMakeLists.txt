@@ -23,14 +23,15 @@ include_directories(
 	)
 
 SET(Demo_SRCS 
-    transformation.h
-    transformation.cpp
+    PointPickerInteractorStyle.h
+    PointPickerInteractorStyle.cpp
     registrationWidget.h
     registrationWidget.cpp
 	)
 	
 SET(Demo_MOC_SRCS 
-  	registrationWidget.h
+  	registrationWidget.h    
+    PointPickerInteractorStyle.h
 	)
 
 SET(Demo_UI_SRCS
