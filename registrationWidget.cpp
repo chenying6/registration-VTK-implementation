@@ -49,8 +49,8 @@ registrationWidget::registrationWidget(QWidget *parent)
 	connect(ui->transform, SIGNAL(clicked()), this, SLOT(mapCT2Toumo()));
 	connect(ui->ct2axis, SIGNAL(clicked()), this, SLOT(mapCT2Marker()));
 	connect(ui->addBall, SIGNAL(clicked()), this, SLOT(addBalls()));
-	this->readCase(s_dicomName);
-	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(s_dicomName);
+	this->readCase(s_modelName);
+	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(s_modelName);
 	if(extension==" "){
 		m_CTActor->SetMapper(imageMapper);
 	    m_ToumoOriginActor->SetMapper(imageMapper);
@@ -86,43 +86,64 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_worldActor->SetShaftType(0);
 	m_worldActor->SetAxisLabels(0);
 	m_worldActor->SetCylinderRadius(0.02);
-
 	m_renderWindow->SetWindowName("render");
 	m_exportWindow->SetWindowName("export");
 	vtkRenderer *renderer = vtkRenderer::New();
 	m_renderWindow->SetSize(800, 800);
 	m_renderWindow->AddRenderer(renderer);	
-	prepareExportCTModel();
-	writeOBJCase();
 	renderer->AddActor(m_worldActor);
 	renderer->AddActor(m_CTActor);
 	//renderer->AddActor(m_ToumoOriginActor);
 	renderer->AddActor(m_MarkerActor);
 	renderer->SetBackground(.3, .3, .5);
 	ui->qvtkWidget->SetRenderWindow(m_renderWindow);
-	
 	vtkPointPicker* pointPicker = vtkPointPicker::New();
 	m_renderWindowInteractor->SetPicker(pointPicker);
 	m_renderWindowInteractor->SetRenderWindow(ui->qvtkWidget->GetRenderWindow());
 	PointPickerInteractorStyle* style = PointPickerInteractorStyle::New();
 	m_renderWindowInteractor->SetInteractorStyle(style);
 	m_renderWindowInteractor->Initialize();
+	prepareExportCTModel();
 	vtkMatrix4x4 *trans1To2 = vtkMatrix4x4::New();
 	trans1To2->Zero();
 	trans1To2->SetElement(0, 0, -1);
-	trans1To2->SetElement(1, 2, -1);
-	trans1To2->SetElement(2, 1, -1);
+	trans1To2->SetElement(1, 2, 1);
+	trans1To2->SetElement(2, 1, 1);
 	trans1To2->SetElement(3, 3, 1);
-	/*double Toumo2MarkerArray[4][4] = {0.6380,  -0.770,  0.026,   -121.88,
-									   -0.012,   0.028,  0.999,  -1234.99,
-									   -0.780,  -0.646, -0.006,   841.138,
-										    0,	      0,      0,         1
-	};
-	double Toumo2CameraArray[4][4] = {0.998,	-0.021,	0.048,	-157.206,
-									  -0.051,	 0.015,	0.998,	-187.029,
-									  -0.022,	-1.012,		0,	 1057.975,
-										   0,		 0,		0,		     1
-	};*/
+	double A[3] = { 0.157617, 0.236388,0.046198 };
+	double B[3] = { 0.156369,0.248437,0.0815967 };
+	double C[3] = { 0.0861328,0.19937,0.0995959 };
+	double D[3] = { 0.213281,0.199424,0.097796 };
+	double AB[3], AC[3], AD[3];
+	for (int i = 0; i < 3; i++) {
+		AB[i] = -A[i] + B[i];
+	}
+	for (int i = 0; i < 3; i++) {
+		AC[i] = -A[i] + C[i];
+	}
+	for (int i = 0; i < 3; i++) {
+		AD[i] = -A[i] + D[i];
+	}
+	double Toumo4markers[4][4];
+	for(int i=0;i<4;i++)
+		switch (i) {
+		case 0:for(int j=0;j<3;j++)
+				    Toumo4markers[j][0] = AB[j];
+			   Toumo4markers[3][0] = 0;
+			   break;
+		case 1:for (int j = 0; j < 3; j++)
+					Toumo4markers[j][1] = AC[j];
+			   Toumo4markers[3][1] = 0;
+			   break;
+		case 2:for (int j = 0; j < 3; j++)
+					Toumo4markers[j][2] = AD[j];
+			   Toumo4markers[3][2] = 0;
+			   break;
+		case 3:for (int j = 0; j < 3; j++)
+					Toumo4markers[j][3] = 0;
+			   Toumo4markers[3][3] = 1;
+			   break;
+		}
 	double Toumo2CameraArray[4][4] = {
 		0.998,  -0.021, 0.048, -157.206,
 		-0.051,  0.015, 0.998, -187.029,
@@ -135,33 +156,31 @@ registrationWidget::registrationWidget(QWidget *parent)
 		-0.011, -1.013, -0.020,  11.072,
 		0,			 0,		 0,		  1
 	};
-	double Marker2CameraArray[4][4] = {
+	double Camera2MarkerArray[4][4] = {
 		0.654,  -0.756, -0.022, 90.609,
 		0.756,  0.654,  0.006, 211.993,
 		0.010, -0.021, 1.000,  -1049.021,
 		-0,		 0,	     -0,		  1
 	};
-	vtkMatrix4x4 *marker2CameraMatrix = setCurrentMatrix(Marker2CameraArray);
-	marker2CameraMatrix->Invert(marker2CameraMatrix, marker2CameraMatrix);
-	cout << "the matrix from camera to marker:" << endl;
-	marker2CameraMatrix->Print(cout);
-	vtkMatrix4x4 *Toumo2Cameramatrix = setCurrentMatrix(Toumo2CameraArray);
-	vtkMatrix4x4 *Toumo2MarkerMatrix = setCurrentMatrix(Toumo2MarkerArray);
-	vtkMatrix4x4 *Camera2ToumoMatrix =  vtkMatrix4x4::New();
-	Camera2ToumoMatrix->Invert(Toumo2Cameramatrix, Camera2ToumoMatrix);
+	vtkMatrix4x4 *Camera2ToumoMatrix = vtkMatrix4x4::New();
+	vtkMatrix4x4 *Toumo2CameraMatrix = setCurrentMatrix(Toumo2CameraArray);
+	Camera2ToumoMatrix->Invert(Toumo2CameraMatrix, Camera2ToumoMatrix);
+	Toumo2CameraMatrix->Delete();
 	cout << "the matrix from camera to toumo:" << endl;
 	Camera2ToumoMatrix->Print(cout);
-	ui->display->insertPlainText("the transformation of Toumo is:\n");
+	ui->display->insertPlainText("the transformation of Toumo is:\n");	
 	getYXZRotationAngles(Camera2ToumoMatrix);
+	vtkMatrix4x4 *Camera2markerMatrix = setCurrentMatrix(Camera2MarkerArray);
+	cout << "the matrix from camera to marker:" << endl;
+	Camera2markerMatrix->Print(cout);
+	vtkMatrix4x4* Toumo2MarkerMatrix = setCurrentMatrix(Toumo2MarkerArray);	
 	vtkMatrix4x4 *markerMatrix = vtkMatrix4x4::New();
-	markerMatrix->Multiply4x4(Camera2ToumoMatrix, Toumo2MarkerMatrix, markerMatrix);
-	//markerMatrix->Invert(markerMatrix, markerMatrix);
+	markerMatrix->Multiply4x4(Toumo2MarkerMatrix, Camera2ToumoMatrix, markerMatrix);
 	cout << "the matrix of camera to marker2:" << endl;
 	markerMatrix->Print(cout);
 	ui->display->insertPlainText("the matrix of camera to marker2:\n");
 	getYXZRotationAngles(markerMatrix);
-
-	markerMatrix->Multiply4x4(markerMatrix, trans1To2, markerMatrix);
+	markerMatrix->Multiply4x4(trans1To2, markerMatrix, markerMatrix);
 	cout << "the matrix of camera to marker1:" << endl;
 	markerMatrix->Print(cout);
 	ui->display->insertPlainText("the matrix of camera to marker1:\n");
