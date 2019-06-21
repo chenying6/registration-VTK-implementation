@@ -161,10 +161,10 @@ registrationWidget::registrationWidget(QWidget *parent)
 		0.010, -0.021, 1.000,  -1049.021,
 		-0,		 0,	     -0,		  1
 	};
-	vtkMatrix4x4 *Toumo2CameraMatrix = setCurrentMatrix(Toumo2CameraArray);
-	cout << "头模到相机的变换矩阵:" << endl;
+	vtkMatrix4x4 *Toumo2CameraMatrix = setCurrentMatrix(Toumo2CameraArray);	
+	cout <<"头模到相机的变换矩阵"<< endl;
 	Toumo2CameraMatrix->Print(cout);
-	ui->display->insertPlainText("头模到相机的变换矩阵:\n");	
+	ui->display->insertPlainText(QStringLiteral("头模到相机的变换矩阵:\n"));
 	getYXZRotationAngles(Toumo2CameraMatrix);
 	vtkMatrix4x4 *Camera2markerMatrix = setCurrentMatrix(Camera2MarkerArray);
 	cout << "相机到Marker板的变换矩阵:" << endl;
@@ -179,12 +179,12 @@ registrationWidget::registrationWidget(QWidget *parent)
 	vtkMatrix4x4* Marker2CameraMatrix = vtkMatrix4x4::New();
 	Marker2CameraMatrix->Invert(Camera2markerMatrix, Marker2CameraMatrix);
 	m_MarkerActor->SetUserMatrix(Marker2CameraMatrix);
-	ui->display->insertPlainText("Marker2到相机的变换的旋转角度:\n");
+	ui->display->insertPlainText(QStringLiteral("Marker2到相机的变换的旋转角度:\n"));
 	getYXZRotationAngles(Marker2CameraMatrix);
 	Marker2CameraMatrix->Multiply4x4(Marker2CameraMatrix,trans1To2, Marker2CameraMatrix);
 	cout << "Marker1到相机的变换矩阵:" << endl;
 	Marker2CameraMatrix->Print(cout);
-	ui->display->insertPlainText("Marker1到相机的变换的旋转角度:\n");
+	ui->display->insertPlainText(QStringLiteral("Marker1到相机的变换的旋转角度:\n"));
 	getYXZRotationAngles(Marker2CameraMatrix);
 }
 
@@ -230,7 +230,7 @@ void registrationWidget::transToumo(const float x, const float y, const float z,
 	m_Toumomatrix = m_ToumoOriginActor->GetUserMatrix();
 	matrix->Multiply4x4(matrix, m_Toumomatrix, matrix);
 	m_ToumoOriginActor->SetUserMatrix(matrix);
-	ui->display->insertPlainText("the present transformation of Toumo:\n");
+	ui->display->insertPlainText(QStringLiteral("the present transformation of Toumo:\n"));
 	getYXZRotationAngles(matrix);
 }
 
@@ -239,7 +239,7 @@ void registrationWidget::transCT(const float x, const float y, const float z, co
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 	matrix = setTransformation_left(x, y, z, rx, ry, rz);
 	m_CTActor->SetUserMatrix(matrix);
-	ui->display->insertPlainText("the present transformation of CT:\n");
+	ui->display->insertPlainText(QStringLiteral("the present transformation of CT:\n"));
 	getYXZRotationAngles(matrix);
 	//exportCompositeModel();
 	writeOBJCase();
@@ -261,7 +261,7 @@ vtkMatrix4x4 *  registrationWidget::objTrans(vtkMatrix4x4 *m){
 void registrationWidget::transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz){
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 	matrix = setTransformation_left(x, y, z, rx, ry, rz);
-	ui->display->insertPlainText("Marker板当前变换的旋转角度:\n");
+	ui->display->insertPlainText(QStringLiteral("Marker板当前变换的旋转角度:\n"));
 	getYXZRotationAngles(matrix);
 	vtkTransform *transformation = vtkTransform::New();
 	transformation->SetMatrix(matrix);
@@ -339,7 +339,7 @@ void registrationWidget::mapCT2Toumo()
 	vtkMatrix4x4 *world2MarkerMatrix = m_Markermatrix;
 	outTXT<<"The marker pistion and rotation:";
 	world2MarkerMatrix->Print(outTXT);
-	ui->display->insertPlainText("The marker pistion and rotation:\n");
+	ui->display->insertPlainText(QStringLiteral("The marker pistion and rotation:\n"));
 	getYXZRotationAngles(world2MarkerMatrix);
 	vtkMatrix4x4 *Marker2ToumoMatrix = vtkMatrix4x4::New();
 	vtkMatrix4x4 *Marker2worldMatrix = vtkMatrix4x4::New();
@@ -348,12 +348,12 @@ void registrationWidget::mapCT2Toumo()
 	Marker2CTMatrix->Multiply4x4(m_CToriginmatrix, Marker2worldMatrix, Marker2CTMatrix);
 	outTXT<< "The CT in marker coordinates:";
 	Marker2CTMatrix->Print(outTXT);
-	ui->display->insertPlainText("the transformation of CT in marker coordinates:\n");
+	ui->display->insertPlainText(QStringLiteral("the transformation of CT in marker coordinates:\n"));
 	getYXZRotationAngles(Marker2CTMatrix);
 	Marker2ToumoMatrix->Multiply4x4(m_Toumomatrix, Marker2worldMatrix, Marker2ToumoMatrix);
 	outTXT<<"The Toumo in marker coordinates:";
 	Marker2ToumoMatrix->Print(outTXT); 
-	ui->display->insertPlainText("the transformation of Toumo in marker coordinates:\n");
+	ui->display->insertPlainText(QString("the transformation of Toumo in marker coordinates:\n"));
 	getYXZRotationAngles(Marker2ToumoMatrix);
 	vtkMatrix4x4 *CT2MarkerMatrix = vtkMatrix4x4::New();
 	CT2MarkerMatrix->Invert(Marker2CTMatrix, CT2MarkerMatrix);
@@ -361,7 +361,7 @@ void registrationWidget::mapCT2Toumo()
 	CT2ToumoMatrix->Multiply4x4(Marker2ToumoMatrix, CT2MarkerMatrix, CT2ToumoMatrix);
 	outTXT<<"the CT2Toumo matrix is:";
 	CT2ToumoMatrix->Print(outTXT);
-	ui->display->insertPlainText("the CT2Toumo matrix is:\n");
+	ui->display->insertPlainText(QStringLiteral("the CT2Toumo matrix is:\n"));
 	getYXZRotationAngles(CT2ToumoMatrix);
 	vtkMatrix4x4 *transformedCTMatrix = vtkMatrix4x4::New();
 	transformedCTMatrix->Multiply4x4(CT2ToumoMatrix, Marker2CTMatrix, transformedCTMatrix);
@@ -388,7 +388,7 @@ void registrationWidget::mapCT2Marker()
 		//CTtrans->Multiply4x4(marker2CToriginMatrix, m_CToriginmatrix, CTtrans);
 		//下一个语句，用于将CT模型的中心点恢复到坐标系原点
 		//CTtrans->Multiply4x4(CTtrans, m_CTcenter2origin, CTtrans);
-		ui->display->insertPlainText("the angles of CT in marker coordiates:\n");
+		ui->display->insertPlainText(QStringLiteral("the angles of CT in marker coordiates:\n"));
 		vtkMatrix4x4 *CTtrans = vtkMatrix4x4::New();
 		CTtrans->Multiply4x4(marker2CToriginMatrix, m_CToriginmatrix, CTtrans);
 		getYXZRotationAngles(CTtrans);
@@ -407,7 +407,7 @@ void registrationWidget::mapCT2Marker()
 void registrationWidget::readCase(std::string fileName)
 {
 	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(fileName);
-	ui->display->insertPlainText("the extension of the filename: ");
+	ui->display->insertPlainText(QStringLiteral("the extension of the filename: "));
 	ui->display->insertPlainText(QString::fromStdString(extension));
 	ui->display->insertPlainText(QString::fromStdString("\n"));
 	vtkAlgorithm *reader = vtkAlgorithm::New();
