@@ -34,7 +34,7 @@ void PointPickerInteractorStyle::OnRightButtonDown() {
 		vtkActor* sphereActor = vtkActor::New();
 		sphereActor->SetMapper(sphereMapper);
 		sphereActor->SetPosition(picked);
-		sphereActor->SetScale(0.01);
+		sphereActor->SetScale(10);
 		sphereActor->GetProperty()->SetColor(1.0, 0.0, 0.0);
 		this->Interactor->GetRenderWindow()->GetRenderers()->GetFirstRenderer()->AddActor(sphereActor);
 

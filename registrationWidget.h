@@ -38,8 +38,6 @@ public slots:
 	void mapCT2Toumo();
 	//将CT影像在Marker板坐标系中的表示表现出来
 	void mapCT2Marker();
-	//添加代表头颅上marker的小球作为标记
-	void addBalls();
 private:
 	//以右手坐标系的方式设置位姿
 	vtkMatrix4x4 * setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz);
@@ -57,9 +55,9 @@ private:
 	void writeOBJCase();
 	//以STL格式导出模型
 	void writeSTLCase(vtkMarchingCubes *data);
-	//根据先平移，再Z,X,Y的旋转顺序，计算绕各轴的旋转角度；注意，使用哪一个函数，应与setTransformation_right对应
+	//VTK中对于静系，默认的变换顺序根据先平移，再Z,X,Y的旋转顺序，计算绕各轴的旋转角度；注意，使用哪一个函数，应与setTransformation_right对应
 	void getZXYRotationAngles(vtkMatrix4x4 *m);
-	//根据先平移，再Y,X,Z的旋转顺序，计算绕各轴的旋转角度；注意，使用哪一个函数，应与setTransformation_right对应
+	//Unity中对于静系，默认的变换顺序，根据先平移，再Y,X,Z的旋转顺序，计算绕各轴的旋转角度；注意，使用哪一个函数，应与setTransformation_right对应
 	void getYXZRotationAngles(vtkMatrix4x4 *m);
 	//自定义绘制组合模型
 	void constructCompositeModel();
@@ -67,9 +65,10 @@ private:
 	void exportCompositeModel();
 	//为输出CT模型做准备，在最开始初始化，而不是每一次发生调用时做准备（会报错）
 	void prepareExportCTModel();
+	void prepareExportMarkerModel();
 	vtkMatrix4x4*  objTrans(vtkMatrix4x4 *m);
 	vtkMatrix4x4* setCurrentMatrix(double matrix[4][4]);
-	//得到由marker变换到CT的变换矩阵，即CT在marker坐标系中的表示
+	//得到由CT变换到marker的变换矩阵，即CT在marker坐标系中的表示
 	vtkMatrix4x4* getmarker2CToriginMatrix();
 
 private:

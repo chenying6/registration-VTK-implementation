@@ -8,6 +8,6 @@ public:
 	PointPickerInteractorStyle();
 	~PointPickerInteractorStyle();
 
-	virtual void OnRightButtonDown() ;
+	virtual void OnRightButtonDown();
 };
 #endif // !POINTPICKERINTERACTORSTYLE_H
