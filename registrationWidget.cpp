@@ -163,6 +163,8 @@ registrationWidget::registrationWidget(QWidget *parent)
 	};
 	vtkMatrix4x4 *Toumo2CameraMatrix = setCurrentMatrix(Toumo2CameraArray);	
 	cout <<"头模到相机的变换矩阵"<< endl;
+	m_CTActor->SetUserMatrix(Toumo2CameraMatrix);
+	//writeOBJCase();
 	Toumo2CameraMatrix->Print(cout);
 	ui->display->insertPlainText(QStringLiteral("头模到相机的变换矩阵:\n"));
 	getYXZRotationAngles(Toumo2CameraMatrix);
@@ -176,12 +178,15 @@ registrationWidget::registrationWidget(QWidget *parent)
 	markerMatrix->Multiply4x4(Toumo2MarkerMatrix, Camera2ToumoMatrix, markerMatrix);
 	cout << "相机到marker2的变换矩阵:" << endl;
 	markerMatrix->Print(cout);
-	vtkMatrix4x4* Marker2CameraMatrix = vtkMatrix4x4::New();
-	Marker2CameraMatrix->Invert(Camera2markerMatrix, Marker2CameraMatrix);
+	auto Marker2CameraMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+	vtkMatrix4x4::Invert(Camera2markerMatrix, Marker2CameraMatrix);
+	cout << "marker2到相机的变换矩阵:" << endl;
+	Marker2CameraMatrix->Print(cout);
 	m_MarkerActor->SetUserMatrix(Marker2CameraMatrix);
+	//m_renderWindow->Render();
 	ui->display->insertPlainText(QStringLiteral("Marker2到相机的变换的旋转角度:\n"));
 	getYXZRotationAngles(Marker2CameraMatrix);
-	Marker2CameraMatrix->Multiply4x4(Marker2CameraMatrix,trans1To2, Marker2CameraMatrix);
+	Marker2CameraMatrix->Multiply4x4(Marker2CameraMatrix,trans1To2,  Marker2CameraMatrix);
 	cout << "Marker1到相机的变换矩阵:" << endl;
 	Marker2CameraMatrix->Print(cout);
 	ui->display->insertPlainText(QStringLiteral("Marker1到相机的变换的旋转角度:\n"));
