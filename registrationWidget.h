@@ -66,7 +66,6 @@ private:
 	//为输出CT模型做准备，在最开始初始化，而不是每一次发生调用时做准备（会报错）
 	void prepareExportCTModel();
 	void prepareExportMarkerModel();
-	vtkMatrix4x4*  objTrans(vtkMatrix4x4 *m);
 	vtkMatrix4x4* setCurrentMatrix(double matrix[4][4]);
 	//得到由CT变换到marker的变换矩阵，即CT在marker坐标系中的表示
 	vtkMatrix4x4* getmarker2CToriginMatrix();

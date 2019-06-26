@@ -61,7 +61,7 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_CTActor->GetProperty()->SetColor(1, 1, 0.9412);
 	m_CTcenter = m_CTActor->GetCenter();
 	m_CTorigin2center->Translate(m_CTcenter[0], m_CTcenter[1], m_CTcenter[2]);
-	m_CTcenter2origin->Invert(m_CTorigin2center->GetMatrix(), m_CTcenter2origin);
+	vtkMatrix4x4::Invert(m_CTorigin2center->GetMatrix(), m_CTcenter2origin);
 
 	m_ToumoOriginActor->GetProperty()->SetOpacity(0.9);
 	m_ToumoOriginActor->GetProperty()->SetColor(0.1, 1, 0.1);
@@ -72,7 +72,7 @@ registrationWidget::registrationWidget(QWidget *parent)
 	m_Toumomatrix = m_ToumoOriginActor->GetUserMatrix();
 	vtkMatrix4x4 *initialInvertMatrix = vtkMatrix4x4::New();
 	m_Toumomatrix->Print(cout);
-	initialInvertMatrix->Invert(m_Toumomatrix, initialInvertMatrix);
+	vtkMatrix4x4::Invert(m_Toumomatrix, initialInvertMatrix);
 	initialInvertMatrix->Print(cout);
 	getYXZRotationAngles(initialInvertMatrix);*/
 #pragma endregion test_back_transformation
@@ -173,7 +173,7 @@ registrationWidget::registrationWidget(QWidget *parent)
 	Camera2markerMatrix->Print(cout);
 	vtkMatrix4x4* Toumo2MarkerMatrix = setCurrentMatrix(Toumo2MarkerArray);	
 	vtkMatrix4x4* Camera2ToumoMatrix = vtkMatrix4x4::New();
-	Camera2ToumoMatrix->Invert(Toumo2CameraMatrix, Camera2ToumoMatrix);
+	vtkMatrix4x4::Invert(Toumo2CameraMatrix, Camera2ToumoMatrix);
 	vtkMatrix4x4 *markerMatrix = vtkMatrix4x4::New();
 	markerMatrix->Multiply4x4(Toumo2MarkerMatrix, Camera2ToumoMatrix, markerMatrix);
 	cout << "相机到marker2的变换矩阵:" << endl;
@@ -242,25 +242,12 @@ void registrationWidget::transToumo(const float x, const float y, const float z,
 void registrationWidget::transCT(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
-	matrix = setTransformation_left(x, y, z, rx, ry, rz);
+	matrix = setTransformation_left(-x, y, z, rx, -ry, -rz);
 	m_CTActor->SetUserMatrix(matrix);
 	ui->display->insertPlainText(QStringLiteral("the present transformation of CT:\n"));
 	getYXZRotationAngles(matrix);
 	//exportCompositeModel();
 	writeOBJCase();
-}
-
-vtkMatrix4x4 *  registrationWidget::objTrans(vtkMatrix4x4 *m){
-	//In VTK, the obj model should firstly rotate around X with 90 degree, then back-direct the x axis
-	
-	//to do the back-direct
-	m->SetElement(0, 1, -m->GetElement(0, 1));
-	m->SetElement(0, 2, -m->GetElement(0, 2));
-	m->SetElement(1, 2, -m->GetElement(1, 2));
-	m->SetElement(2, 1, -m->GetElement(2, 1));
-	//now, set the translation along x axis with negative translation values
-	m->SetElement(0, 3, -m->GetElement(0, 3));
-	return m;
 }
 
 void registrationWidget::transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz){
@@ -348,7 +335,7 @@ void registrationWidget::mapCT2Toumo()
 	getYXZRotationAngles(world2MarkerMatrix);
 	vtkMatrix4x4 *Marker2ToumoMatrix = vtkMatrix4x4::New();
 	vtkMatrix4x4 *Marker2worldMatrix = vtkMatrix4x4::New();
-	Marker2worldMatrix->Invert(world2MarkerMatrix, Marker2worldMatrix);
+	vtkMatrix4x4::Invert(world2MarkerMatrix, Marker2worldMatrix);
 	vtkMatrix4x4 *Marker2CTMatrix = vtkMatrix4x4::New();
 	Marker2CTMatrix->Multiply4x4(m_CToriginmatrix, Marker2worldMatrix, Marker2CTMatrix);
 	outTXT<< "The CT in marker coordinates:";
@@ -361,7 +348,7 @@ void registrationWidget::mapCT2Toumo()
 	ui->display->insertPlainText(QString("the transformation of Toumo in marker coordinates:\n"));
 	getYXZRotationAngles(Marker2ToumoMatrix);
 	vtkMatrix4x4 *CT2MarkerMatrix = vtkMatrix4x4::New();
-	CT2MarkerMatrix->Invert(Marker2CTMatrix, CT2MarkerMatrix);
+	vtkMatrix4x4::Invert(Marker2CTMatrix, CT2MarkerMatrix);
 	vtkMatrix4x4 *CT2ToumoMatrix = vtkMatrix4x4::New();
 	CT2ToumoMatrix->Multiply4x4(Marker2ToumoMatrix, CT2MarkerMatrix, CT2ToumoMatrix);
 	outTXT<<"the CT2Toumo matrix is:";
@@ -539,7 +526,7 @@ vtkMatrix4x4* registrationWidget::getmarker2CToriginMatrix() {
 	m_Markermatrix = m_MarkerActor->GetMatrix();
 	m_CToriginmatrix = m_CTActor->GetMatrix();
 	vtkMatrix4x4 *inverseMarkerMatrix = vtkMatrix4x4::New();//标记板坐标的逆矩阵
-	inverseMarkerMatrix->Invert(m_Markermatrix, inverseMarkerMatrix);
+	vtkMatrix4x4::Invert(m_Markermatrix, inverseMarkerMatrix);
 	vtkMatrix4x4 *CTmarker2originMatrix = vtkMatrix4x4::New();
 	CTmarker2originMatrix->Multiply4x4(m_CToriginmatrix, inverseMarkerMatrix, CTmarker2originMatrix);
 	outTXT << "marker to CT origin matrix:";
