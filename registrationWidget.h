@@ -21,6 +21,7 @@
 #include "vtkMatrix4x4.h"
 #include "vtkImageData.h"
 #include "vtkDataSetMapper.h"
+#include "qstring.h"
 using namespace std;
 namespace Ui {
 	class marchingCubeAPP : public Ui_Form {};
@@ -46,10 +47,13 @@ private:
 	vtkMatrix4x4 * setTransformation_left(const float x, const float y, const float z, const float rx, const float ry, const float rz);
 	//改变Toumo的位姿
 	void transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	void transToumo(vtkMatrix4x4* matrix);
 	//改变CT的位姿
 	void transCT(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	void transCT(vtkMatrix4x4* matrix);
 	//改变marker板的位姿
 	void transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz);
+	void transMarker(vtkMatrix4x4* matrix);
 	//根据输入的文件的类型，进行文件的读取
 	void readCase(std::string fileName);
 	//以obj格式导出模型
@@ -68,9 +72,10 @@ private:
 	void prepareExportCTModel();
 	void prepareExportMarkerModel();
 	vtkMatrix4x4* setCurrentMatrix(double matrix[4][4]);
+	vtkMatrix4x4* setCurrentMatrix(float* r1, float* r2, float *r3, float* r4);
 	//得到由CT变换到marker的变换矩阵，即CT在marker坐标系中的表示
 	vtkMatrix4x4* getmarker2CToriginMatrix();
-
+	void getFloatFromQString(QString s, float*& array);
 private:
 	Ui_Form *ui;
 	double *m_CTcenter;
@@ -89,7 +94,6 @@ private:
 	vtkPolyData *compositepolydata = vtkPolyData::New();
 	int firstClick2Marker=0;
 	int polyOrImage = 0;
-	double outMatrix[20][4];
 	int index = 0;
 
 	vtkImageData *niftiImage = vtkImageData::New();

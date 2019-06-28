@@ -150,7 +150,7 @@ registrationWidget::registrationWidget(QWidget *parent)
 	vtkMatrix4x4::Invert(Camera2markerMatrix, Marker2CameraMatrix);
 	cout << "marker2到相机的变换矩阵:" << endl;
 	Marker2CameraMatrix->Print(cout);
-	m_MarkerActor->SetUserMatrix(Marker2CameraMatrix);
+	//m_MarkerActor->SetUserMatrix(Marker2CameraMatrix);
 	//m_renderWindow->Render();
 	ui->display->insertPlainText(QStringLiteral("Marker2到相机的变换的旋转角度:\n"));
 	getYXZRotationAngles(Marker2CameraMatrix);
@@ -199,18 +199,23 @@ void registrationWidget::transToumo(const float x, const float y, const float z,
 {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 	matrix = setTransformation_left(x, y, z, rx, ry, rz);
+	transToumo(matrix);
+}
+void registrationWidget::transToumo(vtkMatrix4x4* matrix) {
 	m_Toumomatrix = m_ToumoOriginActor->GetUserMatrix();
 	matrix->Multiply4x4(matrix, m_Toumomatrix, matrix);
 	m_ToumoOriginActor->SetUserMatrix(matrix);
 	ui->display->insertPlainText(QStringLiteral("the present transformation of Toumo:\n"));
 	getYXZRotationAngles(matrix);
 }
-
 void registrationWidget::transCT(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 	//matrix = setTransformation_left(-x, y, z, rx, -ry, -rz);
 	matrix = setTransformation_right(x, y, z, rx, ry, rz);
+	transCT(matrix);
+}
+void registrationWidget::transCT(vtkMatrix4x4* matrix) {
 	cout << "变换后的头模的位姿：" << endl;
 	matrix->Print(cout);
 	m_CTActor->SetUserMatrix(matrix);
@@ -219,10 +224,12 @@ void registrationWidget::transCT(const float x, const float y, const float z, co
 	//exportCompositeModel();
 	//writeOBJCase();
 }
-
 void registrationWidget::transMarker(const float x, const float y, const float z, const float rx, const float ry, const float rz){
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
 	matrix = setTransformation_left(x, y, z, rx, ry, rz);
+	transMarker(matrix);
+}
+void registrationWidget::transMarker(vtkMatrix4x4* matrix) {
 	ui->display->insertPlainText(QStringLiteral("Marker板当前变换的旋转角度:\n"));
 	getYXZRotationAngles(matrix);
 	vtkTransform *transformation = vtkTransform::New();
@@ -230,7 +237,6 @@ void registrationWidget::transMarker(const float x, const float y, const float z
 	m_MarkerActor->SetUserTransform(transformation);
 	//writeOBJCase();
 }
-
 void registrationWidget::setPresentStates()
 {
 	QString qrx=ui->rx->toPlainText(); 
@@ -273,35 +279,40 @@ void registrationWidget::setPresentStates()
 
 void registrationWidget::setPresentStatesByMatrix() {
 	QString t2c1 = ui->t2c1->toPlainText();
-	const char* st2c1 = t2c1.toStdString().c_str();
-	char* a =new char[4];
-	strcpy(a, st2c1);
-	cout << a << endl;
-	//char* array=strtok(a, ",");
-	//cout<<array<<endl;
+	float* ft2c1 = new float[4];
+	getFloatFromQString(t2c1,ft2c1);
 	QString t2c2 = ui->t2c2->toPlainText();
-	float ft2c2 = atof(t2c2.toStdString().c_str());
-	cout << "t2c2的值为：" << ft2c2 << endl;
+	float* ft2c2 = new float[4];
+	getFloatFromQString(t2c2, ft2c2);
 	QString t2c3 = ui->t2c3->toPlainText();
-	float ft2c3 = atof(t2c3.toStdString().c_str());
-	cout << "t2c3的值为：" << ft2c3 << endl;
-	QString t2c4 = ui->t2c3->toPlainText();
-	float ft2c4 = atof(t2c4.toStdString().c_str());
-	cout << "t2c4的值为：" << ft2c4 << endl;
-
-
+	float* ft2c3 = new float[4];
+	getFloatFromQString(t2c3, ft2c3);
+	QString t2c4 = ui->t2c4->toPlainText();
+	float* ft2c4 = new float[4];
+	getFloatFromQString(t2c4, ft2c4);
+	vtkMatrix4x4* matrixT2C=setCurrentMatrix(ft2c1, ft2c2, ft2c3, ft2c4);
+	matrixT2C->Print(cout);
+	//transToumo(matrixT2C);
+	transCT(matrixT2C);
 	QString c2m1 = ui->c2m1->toPlainText();
-	float fc2m1 = atof(c2m1.toStdString().c_str());
-	cout << "c2m1的值为：" << fc2m1 << endl;
+	cout << c2m1.toStdString() << endl;
+	float* fc2m1 = new float[4];
+	getFloatFromQString(c2m1, fc2m1);
 	QString c2m2 = ui->c2m2->toPlainText();
-	float fc2m2 = atof(c2m2.toStdString().c_str());
-	cout << "c2m2的值为：" << fc2m2 << endl;
+	float* fc2m2 = new float[4];
+	getFloatFromQString(c2m2, fc2m2);
 	QString c2m3 = ui->c2m3->toPlainText();
-	float fc2m3 = atof(c2m3.toStdString().c_str());
-	cout << "c2m3的值为：" << fc2m3 << endl;
-	QString c2m4 = ui->t2c3->toPlainText();
-	float fc2m4 = atof(c2m4.toStdString().c_str());
-	cout << "t2c4的值为：" << fc2m4 << endl;
+	float* fc2m3 = new float[4];
+	getFloatFromQString(c2m3, fc2m3);
+	QString c2m4 = ui->t2c4->toPlainText();
+	float* fc2m4 = new float[4];
+	getFloatFromQString(c2m4,fc2m4);
+	vtkMatrix4x4* matrixC2M = setCurrentMatrix(fc2m1, fc2m2, fc2m3, fc2m4);
+	matrixC2M->Print(cout);
+	transMarker(matrixC2M);
+
+	m_renderWindow->Render();
+	m_renderWindowInteractor->Start();
 }
 vtkMatrix4x4 * registrationWidget::setCurrentMatrix(double m[4][4]) {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
@@ -323,7 +334,26 @@ vtkMatrix4x4 * registrationWidget::setCurrentMatrix(double m[4][4]) {
 	matrix->SetElement(3, 3, m[3][3]);
 	return matrix;
 }
-
+vtkMatrix4x4* registrationWidget::setCurrentMatrix(float* r1, float* r2, float *r3, float* r4) {
+	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
+	matrix->SetElement(0, 0, r1[0]);
+	matrix->SetElement(0, 1, r1[1]);
+	matrix->SetElement(0, 2, r1[2]);
+	matrix->SetElement(0, 3, r1[3]);
+	matrix->SetElement(1, 0, r2[0]);
+	matrix->SetElement(1, 1, r2[1]);
+	matrix->SetElement(1, 2, r2[2]);
+	matrix->SetElement(1, 3, r2[3]);
+	matrix->SetElement(2, 0, r3[0]);
+	matrix->SetElement(2, 1, r3[1]);
+	matrix->SetElement(2, 2, r3[2]);
+	matrix->SetElement(2, 3, r3[3]);
+	matrix->SetElement(3, 0, r4[0]);
+	matrix->SetElement(3, 1, r4[1]);
+	matrix->SetElement(3, 2, r4[2]);
+	matrix->SetElement(3, 3, r4[3]);
+	return matrix;
+}
 void registrationWidget::mapCT2Toumo()
 {
 	std::ofstream outTXT("C:\\Users\\29477\\Desktop\\matrix.txt", ios::out);
@@ -537,7 +567,24 @@ vtkMatrix4x4* registrationWidget::getmarker2CToriginMatrix() {
 	outTXT.close();
 	return CTmarker2originMatrix;
 }
-
+void registrationWidget::getFloatFromQString(QString s, float*& array) {
+	string originS = s.toStdString().c_str();
+	int index0 = originS.find(',');
+	string sub0 = originS.substr(0, index0);
+	array[0] = atof(sub0.c_str());
+	string sub00 = originS.substr(index0 + 1,originS.size());
+	int index1 = sub00.find(',');
+	string sub1 = sub00.substr(0, index1);
+	array[1] = atof(sub1.c_str());
+	string sub11 = sub00.substr(index1+1, sub00.size());
+	int index2 = sub11.find(',');
+	string sub2 = sub11.substr(0, index2);
+	array[2] = atof(sub2.c_str());
+	string sub22 = sub11.substr(index2 + 1, sub11.size());
+	int index3 = sub22.find(',');
+	string sub3 =sub22.substr(0,index3);
+	array[3] = atof(sub3.c_str());
+}
 void registrationWidget::constructCompositeModel() {
 	vtkPoints *points = vtkPoints::New();
 	points->InsertNextPoint(0.0, 0.0, 0.0);
