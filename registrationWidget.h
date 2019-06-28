@@ -38,6 +38,7 @@ public slots:
 	void mapCT2Toumo();
 	//将CT影像在Marker板坐标系中的表示表现出来
 	void mapCT2Marker();
+	void setPresentStatesByMatrix();
 private:
 	//以右手坐标系的方式设置位姿
 	vtkMatrix4x4 * setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz);
