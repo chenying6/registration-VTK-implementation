@@ -27,6 +27,10 @@ SET(Demo_SRCS
     PointPickerInteractorStyle.cpp
     registrationWidget.h
     registrationWidget.cpp
+    Transformation.h
+    Transformation.cpp
+    InputOutput.h
+    InputOutput.cpp
 	)
 	
 SET(Demo_MOC_SRCS 
