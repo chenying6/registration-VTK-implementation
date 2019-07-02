@@ -14,13 +14,14 @@
 #include "vtkPolygon.h"
 #include "vtkActor.h"
 #include "vtkRenderer.h"
+#include "vtkPolyDataConnectivityFilter.h"
+#include "vtkAlgorithmOutput.h"
 vtkMapper * InputOutput::readCase(std::string fileName)
 {
 	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(fileName);
-	vtkAlgorithm *reader = vtkAlgorithm::New();
+	vtkPolyData *origindata = vtkPolyData::New();
 	vtkPolyData *CTdata = vtkPolyData::New();
-	vtkPolyData *Toumodata = vtkPolyData::New();
-	vtkImageData* niftiImage = vtkImageData::New();
+	vtkSmartPointer<vtkImageData> imageData = vtkSmartPointer<vtkImageData>::New();
 	vtkPolyDataMapper* polyMapper = vtkPolyDataMapper::New();
 	vtkDataSetMapper* imageMapper = vtkDataSetMapper::New();
 	if (extension == ".obj")
@@ -40,8 +41,8 @@ vtkMapper * InputOutput::readCase(std::string fileName)
 	else if (extension == ".nii")
 	{
 		vtkSmartPointer<vtkNIFTIImageReader> nifti = vtkSmartPointer<vtkNIFTIImageReader>::New();
-		niftiImage = this->ImageDataReader(nifti,fileName.data());
-		imageMapper->SetInputData(niftiImage);
+		imageData = this->ImageDataReader(nifti,fileName.data());
+		imageMapper->SetInputData(imageData);
 		return imageMapper;
 	}
 	else
@@ -49,21 +50,32 @@ vtkMapper * InputOutput::readCase(std::string fileName)
 		vtkSmartPointer<vtkImageShrink3D> shrink = vtkSmartPointer<vtkImageShrink3D>::New();
 		vtkSmartPointer<vtkMarchingCubes> CTdata = vtkSmartPointer<vtkMarchingCubes>::New();
 		vtkSmartPointer<vtkDecimatePro> decimate = vtkSmartPointer<vtkDecimatePro>::New();
-		vtkSmartPointer<vtkImageData> imageData = DICOMReader(fileName.data());
-		shrink->SetInputData((vtkDataObject*)imageData);
+		shrink->SetInputConnection(DICOMReader(fileName.data()));
 		shrink->SetShrinkFactors(1, 1, 1);
 		shrink->AveragingOn();
 		shrink->Update();
-		CTdata->SetInputData((vtkDataSet*)shrink->GetOutput());
+		CTdata->SetInputConnection(shrink->GetOutputPort());
 		CTdata->ComputeNormalsOn();
 		CTdata->SetValue(0, -150);
 		CTdata->Update();
-		decimate->SetInputData(CTdata->GetOutputDataObject(0));
+		decimate->SetInputConnection(CTdata->GetOutputPort());
 		decimate->SetTargetReduction(0.8);
 		decimate->Update();
-		polyMapper->SetInputConnection(decimate->GetOutputPort());
+		vtkAlgorithmOutput* toumoConnectivity = vtkAlgorithmOutput::New();
+		toumoConnectivity = ExtractToumoConnectivity(decimate->GetOutputPort());
+		//polyMapper->SetInputConnection();
+		polyMapper->SetInputConnection(toumoConnectivity);
+		polyMapper->Update();
 		return polyMapper;
 	}
+}
+
+vtkAlgorithmOutput* InputOutput::ExtractToumoConnectivity(vtkAlgorithmOutput* input) {
+	vtkPolyDataConnectivityFilter* connectivityFilter = vtkPolyDataConnectivityFilter::New();
+	connectivityFilter->SetInputConnection(input);
+	connectivityFilter->SetExtractionModeToLargestRegion();
+	connectivityFilter->Update();
+	return connectivityFilter->GetOutputPort();
 }
 template<class T>
 vtkPolyData* InputOutput::PolyDataReader(vtkSmartPointer<T> type, const char* fileName) {
@@ -77,7 +89,7 @@ vtkImageData* InputOutput::ImageDataReader(vtkSmartPointer<T>  type, const char*
 	type->Update();
 	return type->GetOutput();
 }
-vtkImageData * InputOutput::DICOMReader(const char* fileName) {
+vtkAlgorithmOutput* InputOutput::DICOMReader(const char* fileName) {
 	vtkDICOMImageReader *dicomReader = vtkDICOMImageReader::New();
 	dicomReader->SetDataByteOrderToLittleEndian();
 	dicomReader->SetDirectoryName(fileName);
@@ -85,7 +97,7 @@ vtkImageData * InputOutput::DICOMReader(const char* fileName) {
 	dicomReader->SetDataScalarTypeToUnsignedShort();
 	dicomReader->Update();
 	dicomReader->GlobalWarningDisplayOff();
-	return dicomReader->GetOutput();
+	return dicomReader->GetOutputPort();
 }
 vtkPolyData * InputOutput::constructCompositeModel() {
 	vtkSmartPointer<vtkPoints> points = vtkSmartPointer<vtkPoints>::New();

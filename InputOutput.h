@@ -19,10 +19,11 @@ public:
 	void exportCompositeModel(vtkPolyData *compositepolydata, vtkRenderWindow *exportWin);
 	//为输出CT模型做准备，在最开始初始化，而不是每一次发生调用时做准备（会报错）
 	void prepareExportModel(vtkActor* actor, vtkRenderWindow *exportWin);
+	vtkAlgorithmOutput* ExtractToumoConnectivity(vtkAlgorithmOutput* input);
 	template<class T>
 	vtkPolyData* PolyDataReader(vtkSmartPointer<T> type, const char* fileName);
 	template<class T>
 	vtkImageData* ImageDataReader(vtkSmartPointer<T> type,const char* fileName);
-	vtkImageData * DICOMReader(const char* fileName);
+	vtkAlgorithmOutput* DICOMReader(const char* fileName);
 };
 #endif // !INPUTOUTPUT_H

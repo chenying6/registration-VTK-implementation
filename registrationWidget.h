@@ -40,7 +40,9 @@ public slots:
 	void mapCT2Toumo();
 	void mapCT2Marker();
 	//将CT影像在Marker板坐标系中的表示表现出来
-	void getCoorsInMarker(vtkMatrix4x4 *CT, vtkMatrix4x4 *matrix, vtkMatrix4x4 *trans);
+	void getCoorsInMarker(vtkMatrix4x4 *matrix, vtkMatrix4x4 *CT, vtkMatrix4x4 *trans);
+	//求把A变换到B得矩阵，也即B到A的变换，B在A坐标系下的表示。其中，AB表示同一个坐标系下，对象AB的表示
+	void getMatrixTransAtoB(vtkMatrix4x4 *A, vtkMatrix4x4 *B, vtkMatrix4x4 *trans);
 	void setPresentStatesByMatrix();
 	//改变Toumo的位姿
 	void transToumo(const float x, const float y, const float z, const float rx, const float ry, const float rz);
@@ -53,26 +55,18 @@ public slots:
 	void transMarker(vtkMatrix4x4* matrix);
 	//从Marker2变换到Marker1的变换矩阵
 	void TransMatrix1to2(vtkMatrix4x4* trans1To2);
-private:	
 	void getFloatFromQString(QString s, float*& array);
+	void printToUI(std::string t);
 private:
 	Ui_Form *ui;
-	double *m_CTcenter;
-	vtkTransform *m_CTorigin2center = vtkTransform::New();
-	vtkMatrix4x4 *m_CTcenter2origin = vtkMatrix4x4::New();
 	vtkActor *m_CTActor = vtkActor::New();
 	vtkActor *m_ToumoOriginActor = vtkActor::New();
 	vtkAxesActor *m_MarkerActor = vtkAxesActor::New();
 	vtkAxesActor *m_worldActor = vtkAxesActor::New();
-	vtkMatrix4x4 *m_Markermatrix, *m_CToriginmatrix, *m_Toumomatrix;
 	vtkRenderWindow *m_renderWindow = vtkRenderWindow::New();
 	vtkRenderWindow *m_exportWindow = vtkRenderWindow::New();
 	vtkRenderWindowInteractor *m_renderWindowInteractor = vtkRenderWindowInteractor::New();
-	vtkPolyData *compositepolydata = vtkPolyData::New();
-	void printToUI(std::string t);
 
-	vtkImageData *niftiImage = vtkImageData::New();
-	vtkDataSetMapper *imageMapper = vtkDataSetMapper::New();
 	InputOutput *inputOutput;
 	Transformation *m_transformation;
 };

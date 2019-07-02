@@ -5,7 +5,6 @@
 #define PI 3.14159265
 vtkMatrix4x4 * Transformation::setTransformation_right(const float x, const float y, const float z, const float rx, const float ry, const float rz)
 {
-	std::ofstream outTXT("C:\\Users\\29477\\Desktop\\matrix.txt", ios::out);
 	vtkTransform *transformation = vtkTransform::New();
 	vtkMatrix4x4 *transMatrix = vtkMatrix4x4::New();
 	transformation->Identity();
@@ -14,8 +13,6 @@ vtkMatrix4x4 * Transformation::setTransformation_right(const float x, const floa
 	transformation->RotateX(rx);
 	transformation->RotateZ(rz);
 	transMatrix = transformation->GetMatrix();
-	transMatrix->Print(outTXT);
-	outTXT.close();
 	return transMatrix;
 }
 vtkMatrix4x4 * Transformation::setTransformation_left(const float x, const float y, const float z, const float rx, const float ry, const float rz)
