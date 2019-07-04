@@ -7,20 +7,10 @@
 */
 
 #include "ui_registration.h"
-#include <qwidget.h>
-#include <QVTKWidget.h>
-#include "vtkPolyDataMapper.h"
-#include "vtkPolyData.h"
 #include "vtkActor.h"
-#include "vtkConeSource.h"
 #include "vtkAxesActor.h"
 #include "vtkRenderWindow.h"
 #include "vtkRenderWindowInteractor.h"
-#include "vtkTransform.h"
-#include "vtkMatrix4x4.h"
-#include "vtkImageData.h"
-#include "vtkDataSetMapper.h"
-#include "qstring.h"
 using namespace std;
 class InputOutput;
 class Transformation;

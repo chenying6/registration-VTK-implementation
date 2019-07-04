@@ -22,22 +22,11 @@ vtkMatrix4x4 * Transformation::setTransformation_left(const float x, const float
 }
 vtkMatrix4x4 * Transformation::setCurrentMatrix(double m[4][4]) {
 	vtkMatrix4x4 *matrix = vtkMatrix4x4::New();
-	matrix->SetElement(0, 0, m[0][0]);
-	matrix->SetElement(0, 1, m[0][1]);
-	matrix->SetElement(0, 2, m[0][2]);
-	matrix->SetElement(0, 3, m[0][3]);
-	matrix->SetElement(1, 0, m[1][0]);
-	matrix->SetElement(1, 1, m[1][1]);
-	matrix->SetElement(1, 2, m[1][2]);
-	matrix->SetElement(1, 3, m[1][3]);
-	matrix->SetElement(2, 0, m[2][0]);
-	matrix->SetElement(2, 1, m[2][1]);
-	matrix->SetElement(2, 2, m[2][2]);
-	matrix->SetElement(2, 3, m[2][3]);
-	matrix->SetElement(3, 0, m[3][0]);
-	matrix->SetElement(3, 1, m[3][1]);
-	matrix->SetElement(3, 2, m[3][2]);
-	matrix->SetElement(3, 3, m[3][3]);
+	for (int i = 0; i < 4; i++) {
+		for (int j = 0; j < 4; j++) {
+			matrix->SetElement(i, j, m[i][j]);
+		}
+	}
 	return matrix;
 }
 vtkMatrix4x4* Transformation::setCurrentMatrix(float* r1, float* r2, float *r3, float* r4) {

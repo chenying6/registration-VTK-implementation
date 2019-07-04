@@ -63,7 +63,6 @@ vtkMapper * InputOutput::readCase(std::string fileName)
 		decimate->Update();
 		vtkAlgorithmOutput* toumoConnectivity = vtkAlgorithmOutput::New();
 		toumoConnectivity = ExtractToumoConnectivity(decimate->GetOutputPort());
-		//polyMapper->SetInputConnection();
 		polyMapper->SetInputConnection(toumoConnectivity);
 		polyMapper->Update();
 		return polyMapper;
@@ -172,7 +171,6 @@ void InputOutput::writeOBJCase(vtkRenderWindow *exportWin)
 void InputOutput::writeSTLCase(vtkMarchingCubes *data)
 {
 	vtkSmartPointer<vtkSTLWriter> stlExporter = vtkSmartPointer<vtkSTLWriter>::New();
-	//stlExporter->SetInputData(data);
 	stlExporter->SetInputConnection(data->GetOutputPort());
 	stlExporter->SetFileTypeToBinary();
 	stlExporter->SetFileName("C:\\Users\\29477\\Desktop\\registrationTest.stl");
