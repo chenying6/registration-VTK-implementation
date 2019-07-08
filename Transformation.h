@@ -1,6 +1,5 @@
 #ifndef TRANSFORMATION_H
 #define TRANSFORMATION_H
-#endif // !TRANSFORMATION_H
 #include "vtkMatrix4x4.h"
 class Transformation {
 public:
@@ -14,6 +13,6 @@ public:
 	std::string getYXZRotationAngles(vtkMatrix4x4 *m);
 	vtkMatrix4x4* setCurrentMatrix(double matrix[4][4]);
 	vtkMatrix4x4* setCurrentMatrix(float* r1, float* r2, float *r3, float* r4);
-	
 };
+#endif // !TRANSFORMATION_H
 

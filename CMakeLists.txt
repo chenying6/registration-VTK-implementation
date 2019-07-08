@@ -31,6 +31,7 @@ SET(Demo_SRCS
     Transformation.cpp
     InputOutput.h
     InputOutput.cpp
+    main.cpp
 	)
 	
 SET(Demo_MOC_SRCS 
