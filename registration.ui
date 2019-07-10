@@ -245,10 +245,10 @@
   <widget class="QTextBrowser" name="display">
    <property name="geometry">
     <rect>
-     <x>30</x>
-     <y>520</y>
-     <width>521</width>
-     <height>181</height>
+     <x>20</x>
+     <y>450</y>
+     <width>531</width>
+     <height>251</height>
     </rect>
    </property>
    <property name="font">
@@ -598,7 +598,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>250</y>
+     <y>290</y>
      <width>131</width>
      <height>16</height>
     </rect>
@@ -611,7 +611,7 @@
    <property name="geometry">
     <rect>
      <x>20</x>
-     <y>390</y>
+     <y>360</y>
      <width>151</width>
      <height>51</height>
     </rect>
@@ -624,7 +624,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>190</y>
+     <y>200</y>
      <width>391</width>
      <height>31</height>
     </rect>
@@ -634,7 +634,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>230</y>
+     <y>240</y>
      <width>391</width>
      <height>31</height>
     </rect>
@@ -644,17 +644,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>270</y>
-     <width>391</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QTextEdit" name="t2c4">
-   <property name="geometry">
-    <rect>
-     <x>160</x>
-     <y>310</y>
+     <y>280</y>
      <width>391</width>
      <height>31</height>
     </rect>
@@ -664,7 +654,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>360</y>
+     <y>330</y>
      <width>391</width>
      <height>31</height>
     </rect>
@@ -674,7 +664,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>400</y>
+     <y>370</y>
      <width>391</width>
      <height>31</height>
     </rect>
@@ -684,17 +674,7 @@
    <property name="geometry">
     <rect>
      <x>160</x>
-     <y>440</y>
-     <width>391</width>
-     <height>31</height>
-    </rect>
-   </property>
-  </widget>
-  <widget class="QTextEdit" name="c2m4">
-   <property name="geometry">
-    <rect>
-     <x>160</x>
-     <y>480</y>
+     <y>410</y>
      <width>391</width>
      <height>31</height>
     </rect>
@@ -704,7 +684,7 @@
    <property name="geometry">
     <rect>
      <x>150</x>
-     <y>340</y>
+     <y>310</y>
      <width>411</width>
      <height>20</height>
     </rect>
@@ -729,7 +709,7 @@
      <x>140</x>
      <y>240</y>
      <width>20</width>
-     <height>281</height>
+     <height>211</height>
     </rect>
    </property>
    <property name="lineWidth">
@@ -750,6 +730,32 @@
    </property>
    <property name="text">
     <string>矩阵设置初始状态</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="writeOBJ">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>150</y>
+     <width>111</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>保存成OBJ格式</string>
+   </property>
+  </widget>
+  <widget class="QPushButton" name="txtPresent">
+   <property name="geometry">
+    <rect>
+     <x>20</x>
+     <y>240</y>
+     <width>111</width>
+     <height>31</height>
+    </rect>
+   </property>
+   <property name="text">
+    <string>TXT设置初始状态</string>
    </property>
   </widget>
   <zorder>transform</zorder>
@@ -799,15 +805,15 @@
   <zorder>t2c1</zorder>
   <zorder>t2c2</zorder>
   <zorder>t2c3</zorder>
-  <zorder>t2c4</zorder>
   <zorder>c2m1</zorder>
   <zorder>c2m2</zorder>
   <zorder>c2m3</zorder>
-  <zorder>c2m4</zorder>
   <zorder>line_7</zorder>
   <zorder>line_8</zorder>
   <zorder>mpresent</zorder>
   <zorder>label_23</zorder>
+  <zorder>writeOBJ</zorder>
+  <zorder>txtPresent</zorder>
  </widget>
  <customwidgets>
   <customwidget>

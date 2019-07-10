@@ -36,7 +36,6 @@ SET(Demo_SRCS
 	
 SET(Demo_MOC_SRCS 
   	registrationWidget.h    
-    PointPickerInteractorStyle.h
 	)
 
 SET(Demo_UI_SRCS

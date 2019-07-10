@@ -30,7 +30,9 @@ public slots:
 	//将CT影像配准到头颅模型上
 	void on_transformButton_clicked();
 	void on_ct2axisButton_clicked();
-
+	//以obj格式导出模型
+	void on_writeOBJButton_clicked();
+	void on_txtPresentButton_clicked();
 private:
 	void initiateWindow(vtkActor *CT, vtkActor *Toumo,vtkAxesActor *marker, vtkAxesActor *world, vtkRenderWindow *renWindow);
 	//将CT影像在Marker板坐标系中的表示表现出来

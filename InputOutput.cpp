@@ -1,10 +1,11 @@
+#include <sstream>
 #include "InputOutput.h"
 #include "vtksys/SystemTools.hxx"
 #include "vtkDICOMImageReader.h"
-#include "vtkOBJExporter.h"
 #include "vtkDecimatePro.h"
 #include "vtkOBJReader.h"
 #include "vtkSTLReader.h"
+#include "vtkOBJExporter.h"
 #include "vtkNIFTIImageReader.h"
 #include "vtkImageShrink3D.h"
 #include "vtkSTLWriter.h"
@@ -14,6 +15,7 @@
 #include "vtkPolygon.h"
 #include "vtkActor.h"
 #include "vtkRenderer.h"
+#include "vtkMatrix4x4.h"
 #include "vtkPolyDataConnectivityFilter.h"
 #include "vtkAlgorithmOutput.h"
 vtkMapper * InputOutput::readCase(std::string fileName)
@@ -154,15 +156,13 @@ void InputOutput::exportCompositeModel(vtkPolyData *compositepolydata, vtkRender
 	vtkRenderer *exportrenderer = vtkRenderer::New();
 	exportrenderer->AddActor(compositeActor);
 	exportWin->AddRenderer(exportrenderer);
-	writeOBJCase(exportWin);
 }
 void  InputOutput::prepareExportModel(vtkActor* actor, vtkRenderWindow *exportWin) {
 	vtkRenderer *exportrenderer = vtkRenderer::New();
 	exportrenderer->AddActor(actor);
 	exportWin->AddRenderer(exportrenderer);
 }
-void InputOutput::writeOBJCase(vtkRenderWindow *exportWin)
-{
+void InputOutput::writeOBJCase(vtkRenderWindow* exportWin) {
 	vtkSmartPointer<vtkOBJExporter> objExporter = vtkSmartPointer<vtkOBJExporter>::New();
 	objExporter->SetFilePrefix("registrationTest");
 	objExporter->SetInput(exportWin);
@@ -176,4 +176,26 @@ void InputOutput::writeSTLCase(vtkMarchingCubes *data)
 	stlExporter->SetFileName("C:\\Users\\29477\\Desktop\\registrationTest.stl");
 	stlExporter->Update();
 	stlExporter->Write();
+}
+
+void InputOutput::readFromTXT(std::string fileName, vtkMatrix4x4*& ctMatrix, vtkMatrix4x4*& markerMatrix) {
+	string line, word;
+	double matrixArray[24];
+	ifstream infile(fileName.c_str());
+	if (!infile)
+		return;
+	int row = 0;
+	int col = 0;
+	while (getline(infile, line)&&row<6) {
+		istringstream stream(line);
+		while (stream >> word) {
+			matrixArray[row * 4 + col] = atof(word.c_str());
+			col++;
+		}
+		row++;
+		col = 0;
+	}
+	infile.close();
+	vtkSmartPointer<vtkMatrix4x4> cMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
+	vtkSmartPointer<vtkMatrix4x4> mMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
 }

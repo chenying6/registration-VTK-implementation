@@ -35,6 +35,8 @@ registrationWidget::registrationWidget(QWidget *parent)
 	connect(ui->transform, SIGNAL(clicked()), this, SLOT(on_transformButton_clicked()));
 	connect(ui->ct2axis, SIGNAL(clicked()), this, SLOT(on_ct2axisButton_clicked()));
 	connect(ui->mpresent, SIGNAL(clicked()), this, SLOT(on_mpresentButton_clicked()));
+	connect(ui->writeOBJ, SIGNAL(clicked()), this, SLOT(on_writeOBJButton_clicked()));
+	connect(ui->txtPresent, SIGNAL(clicked()), this, SLOT(on_txtPresentButton_clicked()));
 	m_pInputOutput = new InputOutput();
 	m_transformation = new Transformation();
 	vtkMapper* mapper= m_pInputOutput->readCase(s_modelName);
@@ -49,42 +51,6 @@ registrationWidget::registrationWidget(QWidget *parent)
 	}	
 	initiateWindow(m_CTActor, m_ToumoOriginActor, m_MarkerActor, m_worldActor, m_renderWindow);
 	m_pInputOutput->prepareExportModel(m_CTActor, m_exportWindow);
-	double Toumo2CameraArray[4][4] = {
-		1.001,  -0.015, -0.002, 47.835,
-		0.000,  -0.094, 0.998, -61.530,
-		-0.013, -0.998,  -0.093,1361.201,
-		0,			 0,		0,		  1
-	};
-	double Marker2CameraArray[4][4] = {
-		-0.75227,  -0.65882, 0.00721, -170.5557,
-		0.63956,  -0.72757,  0.24821, 239.1999,
-		-0.15828, 0.19134, 0.96868,  1265.3409,
-		-0,		 0,	     -0,		  1
-	};	
-	vtkMatrix4x4 *Toumo2CameraMatrix = m_transformation->setCurrentMatrix(Toumo2CameraArray);
-	m_ToumoOriginActor->SetUserMatrix(Toumo2CameraMatrix);
-	//inputOutput->writeOBJCase(m_exportWindow);
-	ui->display->insertPlainText(QStringLiteral("头模到相机的变换矩阵:\n"));
-	cout << "头模到相机的变换矩阵:\n" << endl;
-	Toumo2CameraMatrix->Print(cout);
-	std::string t= m_transformation->getYXZRotationAngles(Toumo2CameraMatrix);
-	printToUI(t);
-	vtkMatrix4x4 *Marker2CameraMatrix = m_transformation->setCurrentMatrix(Marker2CameraArray);
-	cout << "Marker板到相机的变换矩阵:" << endl;
-	Marker2CameraMatrix->Print(cout);
-	m_MarkerActor->SetUserMatrix(Marker2CameraMatrix);
-	m_renderWindow->Render();
-	ui->display->insertPlainText(QStringLiteral("Marker2到相机的变换的旋转角度:\n"));
-	t=m_transformation->getYXZRotationAngles(Marker2CameraMatrix);
-	printToUI(t);
-	vtkMatrix4x4 *trans1To2 = vtkMatrix4x4::New();
-	TransMatrix1to2(trans1To2);
-	Marker2CameraMatrix->Multiply4x4(Marker2CameraMatrix,trans1To2, Marker2CameraMatrix);
-	cout << "Marker1到相机的变换矩阵:" << endl;
-	Marker2CameraMatrix->Print(cout);
-	ui->display->insertPlainText(QStringLiteral("Marker1到相机的变换的旋转角度:\n"));
-	t=m_transformation->getYXZRotationAngles(Marker2CameraMatrix);
-	printToUI(t);
 }
 registrationWidget::~registrationWidget()
 {
@@ -139,7 +105,6 @@ void registrationWidget::transModel(vtkActor* actor, vtkMatrix4x4* matrix, std::
 	printToUI(t);
 	actor->SetUserMatrix(matrix);
 }
-
 void registrationWidget::on_presentButton_clicked()
 {
 	vector<int> array;
@@ -179,7 +144,6 @@ void registrationWidget::on_presentButton_clicked()
 	m_renderWindow->Render();
 	m_renderWindowInteractor->Start();
 }
-
 void registrationWidget::on_mpresentButton_clicked() {
 	QString t2c1 = ui->t2c1->toPlainText();
 	float* ft2c1 = new float[4];
@@ -190,33 +154,46 @@ void registrationWidget::on_mpresentButton_clicked() {
 	QString t2c3 = ui->t2c3->toPlainText();
 	float* ft2c3 = new float[4];
 	getFloatFromQString(t2c3, ft2c3);
-	QString t2c4 = ui->t2c4->toPlainText();
-	float* ft2c4 = new float[4];
-	getFloatFromQString(t2c4, ft2c4);
+	float ft2c4[4];
+	ft2c4[0] = 0; ft2c4[1] = 0; ft2c4[2] = 0; ft2c4[3] = 1;
 	vtkMatrix4x4* matrixT2C= m_transformation->setCurrentMatrix(ft2c1, ft2c2, ft2c3, ft2c4);
 	matrixT2C->Print(cout);
-	//transToumo(matrixT2C);
+	
 	transModel(m_CTActor, matrixT2C,"CT");
-	QString c2m1 = ui->c2m1->toPlainText();
-	cout << c2m1.toStdString() << endl;
-	float* fc2m1 = new float[4];
-	getFloatFromQString(c2m1, fc2m1);
-	QString c2m2 = ui->c2m2->toPlainText();
-	float* fc2m2 = new float[4];
-	getFloatFromQString(c2m2, fc2m2);
-	QString c2m3 = ui->c2m3->toPlainText();
-	float* fc2m3 = new float[4];
-	getFloatFromQString(c2m3, fc2m3);
-	QString c2m4 = ui->t2c4->toPlainText();
-	float* fc2m4 = new float[4];
-	getFloatFromQString(c2m4,fc2m4);
-	vtkMatrix4x4* matrixC2M = m_transformation->setCurrentMatrix(fc2m1, fc2m2, fc2m3, fc2m4);
-	matrixC2M->Print(cout);
-	transModel((vtkActor*)m_MarkerActor, matrixC2M,"Marker");
+	QString m2c1 = ui->c2m1->toPlainText();
+	cout << m2c1.toStdString() << endl;
+	float* fm2c1 = new float[4];
+	getFloatFromQString(m2c1, fm2c1);
+	QString m2c2 = ui->c2m2->toPlainText();
+	float* fm2c2 = new float[4];
+	getFloatFromQString(m2c2, fm2c2);
+	QString m2c3 = ui->c2m3->toPlainText();
+	float* fm2c3 = new float[4];
+	getFloatFromQString(m2c3, fm2c3);
+	float fm2c4[4];
+	fm2c4[0] = 0; fm2c4[1] = 0; fm2c4[2] = 0; fm2c4[3] = 1;
+	vtkMatrix4x4* matrixM2C = m_transformation->setCurrentMatrix(fm2c1, fm2c2, fm2c3, fm2c4);
+	matrixM2C->Print(cout);
+	transModel((vtkActor*)m_MarkerActor, matrixM2C,"Marker");
+
+	vtkMatrix4x4 *trans1To2 = vtkMatrix4x4::New();
+	TransMatrix1to2(trans1To2);
+	vtkMatrix4x4* marker12CameraMatrix = vtkMatrix4x4::New();
+	vtkMatrix4x4::Multiply4x4(matrixM2C, trans1To2, marker12CameraMatrix);
+	cout << "Marker1到相机的变换矩阵:" << endl;
+	marker12CameraMatrix->Print(cout);
+	ui->display->insertPlainText(QStringLiteral("Marker1到相机的变换的旋转角度:\n"));
+	std::string t = m_transformation->getYXZRotationAngles(marker12CameraMatrix);
+	printToUI(t);
 	m_renderWindow->Render();
 	m_renderWindowInteractor->Start();
 }
-
+void registrationWidget::on_txtPresentButton_clicked() {
+	std::string fileName = "C:\\Users\\29477\\Desktop\\123.txt";
+	vtkMatrix4x4* ctMatrix = vtkMatrix4x4::New();
+	vtkMatrix4x4* markerMatrix = vtkMatrix4x4::New();
+	m_pInputOutput->readFromTXT(fileName, ctMatrix, markerMatrix);
+}
 void registrationWidget::on_transformButton_clicked()
 {
 	ui->display->insertPlainText(QStringLiteral("The marker pistion and rotation:\n"));
@@ -242,7 +219,6 @@ void registrationWidget::on_transformButton_clicked()
 	m_renderWindow->Render();
 	m_renderWindowInteractor->Start();
 }
-
 void registrationWidget::on_ct2axisButton_clicked() {
 	vtkMatrix4x4* CT2MarkerMatrix = vtkMatrix4x4::New();
 	vtkMatrix4x4* backCTmatrix = vtkMatrix4x4::New();
@@ -265,7 +241,6 @@ void registrationWidget::getCoorsInMarker(vtkMatrix4x4 *marker, vtkMatrix4x4 *mo
 		std::string t=m_transformation->getYXZRotationAngles(trans);
 		printToUI(t);
 }
-
 void registrationWidget::TransMatrix1to2(vtkMatrix4x4* trans1To2) {
 	trans1To2->Zero();
 	trans1To2->SetElement(0, 0, -1);
@@ -290,6 +265,10 @@ void registrationWidget::getFloatFromQString(QString s, float*& array) {
 	size_t index3 = sub22.find(DELIMITER);
 	string sub3 =sub22.substr(0,index3);
 	array[3] = atof(sub3.c_str());
+}
+void registrationWidget::on_writeOBJButton_clicked()
+{
+	m_pInputOutput->writeOBJCase(m_exportWindow);
 }
 void registrationWidget::printToUI(std::string t) {
 	ui->display->insertPlainText(QString::fromStdString(t));
