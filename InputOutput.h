@@ -20,7 +20,7 @@ public:
 	//为输出CT模型做准备，在最开始初始化，而不是每一次发生调用时做准备（会报错）
 	void prepareExportModel(vtkActor* actor, vtkRenderWindow *exportWin);
 	//从TXT文件中读取
-	void readFromTXT(std::string fileName, vtkMatrix4x4*& ctMatrix, vtkMatrix4x4*& markerMatrix);
+	void readFromTXT(std::string fileName, float*& matrixArray);
 	vtkAlgorithmOutput* ExtractToumoConnectivity(vtkAlgorithmOutput* input);
 	template<class T>
 	vtkPolyData* PolyDataReader(vtkSmartPointer<T> type, const char* fileName);

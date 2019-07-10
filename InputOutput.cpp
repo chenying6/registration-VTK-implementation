@@ -178,9 +178,8 @@ void InputOutput::writeSTLCase(vtkMarchingCubes *data)
 	stlExporter->Write();
 }
 
-void InputOutput::readFromTXT(std::string fileName, vtkMatrix4x4*& ctMatrix, vtkMatrix4x4*& markerMatrix) {
+void InputOutput::readFromTXT(std::string fileName, float*& matrixArray) {
 	string line, word;
-	double matrixArray[24];
 	ifstream infile(fileName.c_str());
 	if (!infile)
 		return;
@@ -196,6 +195,4 @@ void InputOutput::readFromTXT(std::string fileName, vtkMatrix4x4*& ctMatrix, vtk
 		col = 0;
 	}
 	infile.close();
-	vtkSmartPointer<vtkMatrix4x4> cMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
-	vtkSmartPointer<vtkMatrix4x4> mMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
 }

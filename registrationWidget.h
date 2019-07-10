@@ -43,6 +43,7 @@ private:
 	void transModel(vtkActor* model, vtkMatrix4x4* matrix, std::string modelName);
 	//从Marker2变换到Marker1的变换矩阵
 	void TransMatrix1to2(vtkMatrix4x4* trans1To2);
+	void GetMatrix1Angles();
 	void getFloatFromQString(QString s, float*& array);
 	void printToUI(std::string t);
 private:
