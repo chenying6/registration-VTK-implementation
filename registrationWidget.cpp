@@ -210,6 +210,7 @@ void registrationWidget::on_transformButton_clicked()
 	vtkMatrix4x4 *Toumo2MarkerMatrix = vtkMatrix4x4::New();
 	vtkMatrix4x4 *CT2MarkerMatrix = vtkMatrix4x4::New();
 	getCoorsInMarker(m_MarkerActor->GetMatrix(), m_CTActor->GetMatrix(),CT2MarkerMatrix);
+	getCoorsInMarker(m_MarkerActor->GetMatrix(), m_ToumoOriginActor->GetMatrix(), Toumo2MarkerMatrix);
 	ui->display->insertPlainText(QStringLiteral("the transformation of CT in marker coordinates:\n"));
 	t=m_transformation->getYXZRotationAngles(CT2MarkerMatrix);
 	printToUI(t);
