@@ -1,6 +1,14 @@
 #ifndef INPUTOUTPUT_H
 #define INPUTOUTPUT_H
-using namespace std;
+/*******************************************************************************
+*Author: Chen Ying
+*Content: It has the following functions:
+		1. import different types of medical images;
+		2. export STL OBJ models
+		3. customly construct composite models with lines, vertices
+		4. extract single model using the connectivity
+*Date: 2019-4-17
+********************************************************************************/
 
 #include "vtkMarchingCubes.h"
 #include "vtkMapper.h"

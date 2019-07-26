@@ -251,8 +251,12 @@ void registrationWidget::getCoorsInMarker(vtkMatrix4x4 *marker, vtkMatrix4x4 *mo
 }
 void registrationWidget::TransMatrix1to2(vtkMatrix4x4* trans1To2) {
 	trans1To2->Zero();
-	trans1To2->SetElement(0, 0, -1);
+	/*trans1To2->SetElement(0, 0, -1);
 	trans1To2->SetElement(1, 2, -1);
+	trans1To2->SetElement(2, 1, -1);
+	trans1To2->SetElement(3, 3, 1);*/
+	trans1To2->SetElement(0, 2, 1);
+	trans1To2->SetElement(1, 0, -1);
 	trans1To2->SetElement(2, 1, -1);
 	trans1To2->SetElement(3, 3, 1);
 }
