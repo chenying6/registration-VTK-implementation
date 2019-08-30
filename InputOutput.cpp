@@ -18,6 +18,8 @@
 #include "vtkMatrix4x4.h"
 #include "vtkPolyDataConnectivityFilter.h"
 #include "vtkAlgorithmOutput.h"
+using std::string;
+using std::istringstream;
 vtkMapper * InputOutput::readCase(std::string fileName)
 {
 	std::string extension = vtksys::SystemTools::GetFilenameLastExtension(fileName);

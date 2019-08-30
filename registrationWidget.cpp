@@ -26,6 +26,8 @@ change to a universal model whose origin and center are not in the same place;
 #define DELIMITER ','
 std::string s_dicomName = "E:\\VTK_Project\\registration_test\\data\\DICOM\\20190408\\10470000";
 std::string s_modelName = "E:\\VTK_Project\\registration_test\\build\\10470000origin.obj";
+using std::vector;
+using std::string;
 registrationWidget::registrationWidget(QWidget *parent)
 	: QWidget(parent)
 {
@@ -181,15 +183,28 @@ void registrationWidget::on_txtPresentButton_clicked() {
 	m_pInputOutput->readFromTXT(fileName, matrixArray);
 	vtkSmartPointer<vtkMatrix4x4> cMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
 	cMatrix = m_transformation->setCurrentMatrix(matrixArray);
-	cMatrix->Print(cout);
+	cMatrix->Print(cout); 	
 	vtkSmartPointer<vtkMatrix4x4> mMatrix = vtkSmartPointer<vtkMatrix4x4>::New();
 	mMatrix = m_transformation->setCurrentMatrix(matrixArray + 12);
 	mMatrix->Print(cout);
 	m_CTActor->SetUserMatrix(cMatrix);
 	m_MarkerActor->SetUserMatrix(mMatrix);
+	GetToumoAngles();
 	GetMatrix1Angles();
 	m_renderWindow->Render();
 	m_renderWindowInteractor->Start();
+}
+void registrationWidget::GetToumoAngles() {
+	vtkMatrix4x4 *ToumoTrans = vtkMatrix4x4::New();
+	//TransMatrixVTKtoUnity(ToumoTrans);
+	ToumoTrans->Identity();
+	vtkMatrix4x4* ToumoUnity = vtkMatrix4x4::New();
+	vtkMatrix4x4::Multiply4x4(ToumoTrans, m_CTActor->GetMatrix(), ToumoUnity);
+	cout << "Unity中头模到相机的变换矩阵:" << endl;
+	ToumoUnity->Print(cout);
+	ui->display->insertPlainText(QStringLiteral("Unity中头模到相机的变换的旋转角度:\n"));
+	std::string t = m_transformation->getYXZRotationAngles(ToumoUnity);
+	printToUI(t);
 }
 void registrationWidget::GetMatrix1Angles() {
 	vtkMatrix4x4 *trans1To2 = vtkMatrix4x4::New();
@@ -248,6 +263,13 @@ void registrationWidget::getCoorsInMarker(vtkMatrix4x4 *marker, vtkMatrix4x4 *mo
 		getMatrixTransAtoB(marker, model, trans);
 		std::string t=m_transformation->getYXZRotationAngles(trans);
 		printToUI(t);
+}
+void registrationWidget::TransMatrixVTKtoUnity(vtkMatrix4x4* UnityToVTK) {
+	UnityToVTK->Zero();
+	UnityToVTK->SetElement(0, 0, -1);
+	UnityToVTK->SetElement(1, 1, 1);
+	UnityToVTK->SetElement(2, 2, 1);
+	UnityToVTK->SetElement(3, 3, 1);
 }
 void registrationWidget::TransMatrix1to2(vtkMatrix4x4* trans1To2) {
 	trans1To2->Zero();
